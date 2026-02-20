@@ -1,6 +1,6 @@
 ---
 title: 첫 글
-date: '2026-02-20 22:11:01+0900'
+date: 2026-02-20 22:11:01 +0900
 categories:
 - etc
 layout: post
