@@ -1,0 +1,12 @@
+.Post {
+    background-color: white;
+    padding: 10px;
+}
+
+.Header {
+    border-bottom: 1px solid #ebebeb;
+}
+
+.Content {
+    margin: 30px;
+}

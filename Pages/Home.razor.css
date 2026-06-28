@@ -1,0 +1,14 @@
+.Post {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.Title {
+    text-align: left;
+}
+
+.Time {
+    text-align: right;
+}

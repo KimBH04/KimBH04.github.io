@@ -2,11 +2,19 @@
 
 <PageTitle>Home</PageTitle>
 
-@foreach (var post in repo.SortedPostByTime)
-{
-	string url = $"/post/{post.Slug}";
-	<NavLink href="@url">@post.Title</NavLink>
-}
+<div style="background-color: white; padding: 10px;">
+	<div style="margin-bottom: 10px; font-size: 20px">newest</div>
+	<div>
+		@foreach (var post in repo.SortedPostByTime)
+		{
+			string url = $"/post/{post.Slug}";
+			<div class="Post">
+				<NavLink href="@url" class="Title">@post.Title</NavLink>
+				<span class="Time">@post.Time.ToString("yyyy-MM-dd")</span>
+			</div>
+		}
+	</div>
+</div>
 
 @code
 {

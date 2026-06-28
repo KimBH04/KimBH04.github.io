@@ -5,11 +5,16 @@
 	return;
 }
 
-@post.Title <br />
+<div class="Post">
+	<div class="Header">
+		<h1 style="margin: 15px;">@post.Title</h1>
+		<p style="margin-left: 15px">@post.Time.ToString("yyyy-MM-dd HH:mm:ss")</p>
+	</div>
 
-@post.Time <br />
-
-@((MarkupString)post.HTMLContent) <br />
+	<div class="Content">
+		@((MarkupString)post.HTMLContent)
+	</div>
+</div>
 
 @code
 {
