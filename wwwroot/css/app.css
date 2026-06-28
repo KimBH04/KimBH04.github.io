@@ -87,3 +87,8 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.Main {
+    background-color: darkblue;
+    margin: 0;
+}

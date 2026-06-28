@@ -1,0 +1,26 @@
+﻿@page "/post/{slug}"
+
+@if (post is null)
+{
+	return;
+}
+
+@post.Title <br />
+
+@post.Time <br />
+
+@((MarkupString)post.HTMLContent) <br />
+
+@code
+{
+	[Parameter]
+	public string Slug { get; set; } = string.Empty;
+
+	private PostInfo? post;
+
+	protected override void OnParametersSet()
+	{
+		post = repo.GetPost(Slug);
+		base.OnParametersSet();
+	}
+}

@@ -1,4 +1,5 @@
 using Blog;
+using Blog.Properties.Post;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
@@ -8,4 +9,10 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 
-await builder.Build().RunAsync();
+builder.Services.AddScoped<PostRepository>();
+
+var host = builder.Build();
+var repo = host.Services.GetRequiredService<PostRepository>();
+await repo.Initialize();
+
+await host.RunAsync();
