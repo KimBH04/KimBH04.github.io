@@ -1,0 +1,164 @@
+﻿@page "/write"
+@using System.Text.Json
+@using System.Text.RegularExpressions
+@inject IJSRuntime js
+
+<PageTitle>Write · KimBH04</PageTitle>
+
+<header class="Heading">
+	<h1>Write</h1>
+	<span class="FileName">@(FileName ?? "제목.md")</span>
+</header>
+
+<div class="Fields">
+	<label class="Field">
+		<span class="Label">TITLE</span>
+		<input class="Input" placeholder="제목" @bind="title" @bind:event="oninput" @bind:after="SaveDraft" />
+	</label>
+	<label class="Field">
+		<span class="Label">TAGS</span>
+		<input class="Input" placeholder="C#, blazor (쉼표로 구분)" @bind="tags" @bind:event="oninput" @bind:after="SaveDraft" />
+	</label>
+</div>
+
+<div class="Editor">
+	<section class="Pane">
+		<div class="PaneBar"><span>EDIT</span><span class="PaneInfo">@body.Length chars</span></div>
+		<div class="Toolbar" role="toolbar" aria-label="마크다운 서식">
+			@foreach (var group in toolGroups)
+			{
+				<div class="ToolGroup">
+					@foreach (var tool in group)
+					{
+						<button type="button" class="Tool @tool.Class" title="@tool.Title" aria-label="@tool.Title"
+								@onmousedown:preventDefault="true" @onclick="() => Format(tool.Kind)">@tool.Label</button>
+					}
+				</div>
+			}
+		</div>
+		<textarea class="Source" @ref="source" spellcheck="false" placeholder="마크다운으로 작성하세요." aria-label="본문"
+				  @bind="body" @bind:event="oninput" @bind:after="SaveDraft"></textarea>
+	</section>
+	<section class="Pane">
+		<div class="PaneBar"><span>PREVIEW</span></div>
+		<div class="Preview markdown">@((MarkupString)PostRepository.ToHtml(body))</div>
+	</section>
+</div>
+
+<div class="Actions">
+	<span class="Status" role="status">@status</span>
+	<button type="button" class="btn" @onclick="Reset">초기화</button>
+	<button type="button" class="btn btn-primary" disabled="@(FileName is null)" @onclick="Download">.md 저장</button>
+</div>
+
+<section class="FrontMatter">
+	<div class="PaneBar"><span>파일 머리말 (저장 시 본문 앞에 추가됨)</span></div>
+	<pre class="FrontMatterCode">@FrontMatter</pre>
+</section>
+
+@code
+{
+	private const string DraftKey = "blog-write-draft";
+
+	private string title = string.Empty;
+
+	private string tags = string.Empty;
+
+	private string body = string.Empty;
+
+	private DateTime time = DateTime.Now;
+
+	private string status = string.Empty;
+
+	private record Draft(string Title, string Tags, string Body);
+
+	private record Tool(string Kind, string Label, string Title, string Class = "");
+
+	private static readonly Tool[][] toolGroups =
+	[
+		[new("h1", "H1", "제목 1"), new("h2", "H2", "제목 2"), new("h3", "H3", "제목 3")],
+		[new("bold", "B", "굵게 (Ctrl+B)", "Bold"), new("italic", "I", "기울임 (Ctrl+I)", "Italic"), new("strike", "S", "취소선", "Strike")],
+		[new("quote", ">", "인용"), new("ul", "-", "글머리 목록"), new("ol", "1.", "번호 목록"), new("task", "[ ]", "체크리스트")],
+		[new("code", "`c`", "인라인 코드 (Ctrl+E)"), new("codeblock", "```", "코드 블록")],
+		[new("link", "Link", "링크 (Ctrl+K)"), new("image", "Img", "이미지"), new("table", "Table", "표"), new("hr", "---", "구분선")],
+	];
+
+	private ElementReference source;
+
+	// 파일 이름에 쓸 수 없는 문자를 제거한 제목. 비어 있으면 null.
+	private string? Slug
+	{
+		get
+		{
+			var slug = Regex.Replace(title, @"[\\/:*?""<>|\p{Cc}]", string.Empty).Trim().TrimEnd('.');
+			return slug.Length == 0 ? null : slug;
+		}
+	}
+
+	private string? FileName => Slug is { } slug ? $"{slug}.md" : null;
+
+	private string[] Tags => tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+	// PostRepository.Parse 가 읽는 형식
+	private string FrontMatter => $"""
+		---
+		title: {title.Trim()}
+		date: {time:yyyy-MM-dd HH:mm}
+		tags: [{string.Join(", ", Tags)}]
+		---
+		""";
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (!firstRender) return;
+
+		await js.InvokeVoidAsync("blogEditor.attach", source);
+
+		var json = await js.InvokeAsync<string?>("blogEditor.load", DraftKey);
+		if (json is null) return;
+
+		try
+		{
+			var draft = JsonSerializer.Deserialize<Draft>(json);
+			if (draft is null) return;
+
+			(title, tags, body) = (draft.Title, draft.Tags, draft.Body);
+			status = "임시 저장된 글을 불러왔습니다.";
+			StateHasChanged();
+		}
+		catch (JsonException)
+		{
+			await js.InvokeVoidAsync("blogEditor.remove", DraftKey);
+		}
+	}
+
+	// 서식 적용 후 textarea 의 input 이벤트로 body 와 임시 저장이 갱신된다.
+	private async Task Format(string kind) => await js.InvokeVoidAsync("blogEditor.format", source, kind);
+
+	private async Task SaveDraft()
+	{
+		status = string.Empty;
+		await js.InvokeVoidAsync("blogEditor.save", DraftKey, JsonSerializer.Serialize(new Draft(title, tags, body)));
+	}
+
+	private async Task Download()
+	{
+		if (FileName is not { } fileName) return;
+
+		time = DateTime.Now;
+		await js.InvokeVoidAsync("blogEditor.download", fileName, $"{FrontMatter}\n\n{body}");
+		status = fileName.Contains('_')
+			? $"{fileName} 저장됨 → 이름에 '_' 가 있어 숨김 글이 됩니다."
+			: $"{fileName} 저장됨 → wwwroot/Posts/ 에 넣으면 게시됩니다.";
+	}
+
+	private async Task Reset()
+	{
+		if (!await js.InvokeAsync<bool>("confirm", "작성 중인 글을 모두 지울까요?")) return;
+
+		(title, tags, body) = (string.Empty, string.Empty, string.Empty);
+		time = DateTime.Now;
+		status = string.Empty;
+		await js.InvokeVoidAsync("blogEditor.remove", DraftKey);
+	}
+}

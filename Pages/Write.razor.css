@@ -1,0 +1,227 @@
+.Heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+    .Heading h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -0.03em;
+    }
+
+.FileName {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+}
+
+/* Fields */
+.Fields {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.Field {
+    display: flex;
+    min-width: 0;
+    border: var(--border);
+}
+
+    .Field:focus-within {
+        box-shadow: 3px 3px 0 var(--blue);
+    }
+
+.Label {
+    display: grid;
+    place-items: center;
+    padding: 0 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: var(--white);
+    background: var(--teal);
+    border-right: var(--border);
+}
+
+.Input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--ink);
+    background: var(--paper);
+    border: 0;
+    border-radius: 0;
+    outline: none;
+}
+
+    .Input::placeholder, .Source::placeholder {
+        color: var(--muted);
+    }
+
+/* Editor */
+.Editor {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.Pane {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    height: max(60vh, 420px);
+    border: var(--border);
+}
+
+    .Pane:focus-within {
+        box-shadow: 3px 3px 0 var(--blue);
+    }
+
+.PaneBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    background: var(--soft);
+    border-bottom: var(--border);
+}
+
+.PaneInfo {
+    font-weight: 400;
+    color: var(--muted);
+}
+
+.Source {
+    flex: 1;
+    width: 100%;
+    padding: 12px 14px;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--ink);
+    background: var(--paper);
+    border: 0;
+    border-radius: 0;
+    outline: none;
+    resize: none;
+    word-break: normal;
+}
+
+.Preview {
+    flex: 1;
+    overflow: auto;
+    padding: 12px 16px;
+    font-size: 14px;
+}
+
+/* Actions */
+.Actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin: 16px 0 32px;
+}
+
+.Status {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+/* Front matter */
+.FrontMatter {
+    border: var(--border);
+}
+
+.FrontMatterCode {
+    margin: 0;
+    padding: 12px 14px;
+    overflow-x: auto;
+    font-family: var(--font);
+    font-size: 13px;
+    line-height: 1.6;
+    color: #EAF4F4;
+    background: var(--teal-deep);
+}
+
+@media (max-width: 640px) {
+    .Fields, .Editor {
+        grid-template-columns: 1fr;
+    }
+
+    .Pane {
+        height: 50vh;
+        min-height: 320px;
+    }
+
+    .Status {
+        flex-basis: 100%;
+    }
+}
+
+/* Markdown toolbar */
+.Toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    padding: 6px 8px;
+    border-bottom: var(--hair);
+}
+
+.ToolGroup {
+    display: flex;
+}
+
+.Tool {
+    min-width: 30px;
+    height: 28px;
+    padding: 0 7px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink);
+    background: var(--paper);
+    border: var(--hair);
+    cursor: pointer;
+}
+
+    .Tool + .Tool {
+        margin-left: -1px;
+    }
+
+    .Tool:hover {
+        position: relative;
+        background: var(--yellow);
+    }
+
+    .Tool:active {
+        color: var(--white);
+        background: var(--blue);
+    }
+
+    .Tool:focus-visible {
+        position: relative;
+        z-index: 1;
+        outline-offset: 0;
+    }
+
+.Bold { font-weight: 800; }
+.Italic { font-style: italic; }
+.Strike { text-decoration: line-through; }

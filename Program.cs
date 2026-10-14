@@ -13,6 +13,6 @@ builder.Services.AddScoped<PostRepository>();
 
 var host = builder.Build();
 var repo = host.Services.GetRequiredService<PostRepository>();
-await repo.Initialize();
+repo.Initialize();
 
 await host.RunAsync();

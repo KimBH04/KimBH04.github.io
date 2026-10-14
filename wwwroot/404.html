@@ -4,28 +4,35 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Blog</title>
+    <title>KimBH04</title>
     <base href="/" />
+    <link rel="icon" type="image/png" href="icon-192.png" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="css/app.css" />
     <link href="Blog.styles.css" rel="stylesheet" />
     <script type="importmap"></script>
 </head>
 
-<body class="Main">
+<body>
     <div id="app">
-        <svg class="loading-progress">
-            <circle r="40%" cx="50%" cy="50%" />
-            <circle r="40%" cx="50%" cy="50%" />
-        </svg>
-        <div class="loading-progress-text"></div>
+        <div class="boot">
+            <div class="boot-window">
+                <div class="boot-title">KimBH04.github.io</div>
+                <div class="boot-body">
+                    <div class="boot-meter"><div class="boot-fill"></div></div>
+                    <div class="boot-text"><span>LOADING</span><span class="loading-progress-text"></span></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="." class="reload">Reload</a>
-        <span class="dismiss">🗙</span>
+        오류가 발생했습니다.
+        <a href="." class="reload">새로고침</a>
+        <span class="dismiss">×</span>
     </div>
+    <script src="js/editor.js"></script>
     <script src="_framework/blazor.webassembly.js"></script>
 </body>
 

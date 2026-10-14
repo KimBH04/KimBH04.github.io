@@ -12,4 +12,11 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.9" PrivateAssets="all" />
   </ItemGroup>
 
+  <!-- 글은 정적 파일로 배포하지 않고 어셈블리 리소스로 포함한다. '_' 로 시작하는 글은 목록에서만 숨긴다 (PostRepository). -->
+  <ItemGroup>
+    <Content Remove="wwwroot\Posts\**" />
+    <None Include="wwwroot\Posts\**" />
+    <EmbeddedResource Include="wwwroot\Posts\*.md" LogicalName="Posts/%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

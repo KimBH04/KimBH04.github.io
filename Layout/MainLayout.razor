@@ -1,5 +1,39 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager nav
 
-<div class="Pannel">
-	@Body
+<div class="Window">
+	<div class="TitleBar">
+		<span class="TitleText">KimBH04.github.io<span class="TitlePath">@Path</span></span>
+		<span class="TitleButtons" aria-hidden="true"><span>_</span><span>□</span><span>×</span></span>
+	</div>
+
+	<header class="SiteHeader">
+		<a class="Logo" href="/"><span class="LogoMark" aria-hidden="true"></span>KimBH04</a>
+		<nav class="Nav" aria-label="메뉴">
+			<a href="https://github.com/KimBH04" target="_blank" rel="noopener">GitHub ↗</a>
+		</nav>
+	</header>
+
+	<nav class="Tabs" aria-label="섹션">
+		<a class="Tab @(IsGame ? "" : "active")" href="/" aria-current="@(IsGame ? null : "page")">Posts</a>
+		<a class="Tab @(IsGame ? "active" : "")" href="/game" aria-current="@(IsGame ? "page" : null)">Games</a>
+	</nav>
+
+	<main class="Main">
+		@Body
+	</main>
+
+	<footer class="StatusBar">
+		<span class="Cell Grow">© @DateTime.Now.Year KimBH04</span>
+		<span class="Cell">@repo.SortedPostByTime.Count posts</span>
+		<span class="Cell"><StatusClock /></span>
+	</footer>
 </div>
+
+@code
+{
+	// 주소는 퍼센트 인코딩되어 있으므로 화면 표시용으로 디코딩한다 (예: %ED%85%8C... → 테스트)
+	private bool IsGame => Path == "/game" || Path.StartsWith("/game/");
+
+	private string Path => "/" + Uri.UnescapeDataString(nav.ToBaseRelativePath(nav.Uri).Split('?', '#')[0]);
+}

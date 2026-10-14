@@ -1,26 +1,77 @@
 ﻿@page "/post/{slug}"
 
+@if (post is null)
+{
+	<PageTitle>Not found · KimBH04</PageTitle>
 
-<div class="Post">
-	@if (post is null)
-	{
-		<pre>
-			"@Slug" is invalid name.
-			<NavLink href="/">Return to Home</NavLink>
-		</pre>
-	}
-	else
-	{
-		<div class="Header">
-			<h1 style="margin: 15px;">@post.Title</h1>
-			<p style="margin-left: 15px">@post.Time.ToString("yyyy-MM-dd HH:mm:ss")</p>
+	<div class="Dialog" role="alertdialog" aria-labelledby="dialog-title">
+		<div class="DialogBar">Error</div>
+		<div class="DialogBody">
+			<h1 id="dialog-title">글을 찾을 수 없습니다</h1>
+			<p>"@Slug" 에 해당하는 글이 없습니다.</p>
+			<div class="DialogActions">
+				<a class="btn btn-primary" href="/">OK</a>
+			</div>
 		</div>
+	</div>
+}
+else
+{
+	<PageTitle>@post.Title · KimBH04</PageTitle>
 
-		<div class="Content">
+	<article class="Post">
+		<a class="Back" href="/">← posts</a>
+
+		<header class="Header">
+			<h1>@post.Title</h1>
+			<dl class="Meta">
+				@if (post.Time != DateTime.MinValue)
+				{
+					<div>
+						<dt>DATE</dt>
+						<dd><time datetime="@post.Time.ToString("s")">@FormatTime(post.Time)</time></dd>
+					</div>
+				}
+				@if (!post.Categories.IsEmpty)
+				{
+					<div>
+						<dt>TAGS</dt>
+						<dd>
+							@foreach (var tag in post.Categories.ToArray())
+							{
+								<span class="tag">@tag</span>
+							}
+						</dd>
+					</div>
+				}
+			</dl>
+		</header>
+
+		<div class="markdown">
 			@((MarkupString)post.HTMLContent)
 		</div>
-	}
-</div>
+
+		@if (older is not null || newer is not null)
+		{
+			<nav class="Pager" aria-label="이전/다음 글">
+				@if (older is not null)
+				{
+					<a class="PagerLink" href="/post/@older.Slug">
+						<span class="PagerLabel">← 이전 글</span>
+						<span class="PagerTitle">@older.Title</span>
+					</a>
+				}
+				@if (newer is not null)
+				{
+					<a class="PagerLink Next" href="/post/@newer.Slug">
+						<span class="PagerLabel">다음 글 →</span>
+						<span class="PagerTitle">@newer.Title</span>
+					</a>
+				}
+			</nav>
+		}
+	</article>
+}
 
 @code
 {
@@ -29,9 +80,32 @@
 
 	private PostInfo? post;
 
+	private PostInfo? older;
+
+	private PostInfo? newer;
+
 	protected override void OnParametersSet()
 	{
 		post = repo.GetPost(Slug);
+		older = newer = null;
+
+		if (post is not null)
+		{
+			var posts = repo.SortedPostByTime;
+			for (int i = 0; i < posts.Count; i++)
+			{
+				if (ReferenceEquals(posts[i], post))
+				{
+					newer = i > 0 ? posts[i - 1] : null;
+					older = i + 1 < posts.Count ? posts[i + 1] : null;
+					break;
+				}
+			}
+		}
+
 		base.OnParametersSet();
 	}
+
+	private static string FormatTime(DateTime time)
+		=> time.TimeOfDay == TimeSpan.Zero ? time.ToString("yyyy-MM-dd") : time.ToString("yyyy-MM-dd HH:mm");
 }
