@@ -4,45 +4,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-A personal blog built as a **Blazor WebAssembly** (.NET 10) static site, deployed to GitHub Pages (`KimBH04.github.io`). Posts are Markdown files rendered client-side with Markdig. There is no backend and no test project.
+A personal blog (`KimBH04.github.io`) built as a plain HTML/CSS/JavaScript single-page app — no framework, no bundler, no npm. The site files live at the repo root (`index.html`, `css/`, `js/`, `Posts/`, `games.json`, `icon-192.png`); only those — listed in `SITE` in `serve.py` — are deployed. Posts are Markdown files rendered in the browser with [marked](https://marked.js.org/) (ES module from jsDelivr, pinned to `marked@18.0.14` in `js/posts.js`). There is no test suite.
 
 ## Commands
 
 ```bash
-dotnet run          # local dev server (URLs in Properties/launchSettings.json)
-dotnet watch        # dev server with hot reload
-dotnet build
-dotnet publish -c Release   # output in bin/Release/net10.0/publish/wwwroot
+python3 serve.py              # dev server at http://localhost:5262 (--port to change)
+python3 serve.py --build      # copy SITE files into _site/ + posts.json + 404.html (what CI does)
 ```
 
-Deployment is automatic: pushing to `main` runs `.github/workflows/gh-pages.yml`, which uses `na1307/blazor-github-pages` to prepare the published `wwwroot` for GitHub Pages and deploys it.
+`serve.py` (stdlib only) mimics GitHub Pages: it generates `/posts.json` on every request and answers unknown paths with `index.html` and status 404, so reloading `/post/...` works. It also refuses to serve anything outside `SITE` (e.g. `serve.py`, `.git`). When adding a new top-level site file or folder, add it to `SITE`. Opening `index.html` via `file://` does not work (ES modules + `fetch`).
+
+Deployment: pushing to `main` runs `.github/workflows/gh-pages.yml`, which runs `python3 serve.py --build` and uploads `_site/` as the Pages artifact. `_site/` (with the generated `posts.json` and `404.html`) is git-ignored — don't commit it, and don't switch Pages to "deploy from branch" (those files would be missing, and Jekyll would drop `_`-prefixed posts).
 
 ## Architecture
 
-- **Post data flow**: there is no post index file. `Blog.csproj` embeds every `wwwroot/Posts/*.md` into the assembly as a resource named `Posts/<file name>` (and removes them from static `Content`, so the raw `.md` files are not deployed). `Program.cs` calls `PostRepository.Initialize()` (in `Properties/Post/Post.cs`), which enumerates those resources, parses each one, renders it with Markdig, and keeps everything in memory.
-- **Hidden posts**: a `.md` whose file name **starts with** `_` is still embedded and reachable by URL (`/post/_draft`), but `PostRepository.IsHidden` keeps it out of `SortedPostByTime` — so it's absent from the list, tag counts, post count and prev/next links. It is not secret: the content ships inside the deployed assembly.
-- **Post format**: the slug is the file name without `.md` (Korean and spaces are fine). Optional front matter at the very top, parsed by a small hand-written parser in `PostRepository.Parse` (not a YAML library — keep to `key: value` lines):
+- **Shell**: `index.html` holds the static window chrome (title bar, header, section tabs, status bar) and an empty `<main id="main">`. All asset URLs are root-absolute (`/css/...`, `/js/...`) because the same file is served as `404.html` at deep paths.
+- **Router** (`js/app.js`): a route table maps paths to page modules — `/` home, `/post/<slug>`, `/game`, `/art`, `/write`; unknown paths `replaceState` to `/`. Same-origin clicks on links that match a route are intercepted (`pushState`); everything else navigates normally. Each navigation renders into a fresh container, so a slow async page can't overwrite a newer one. After client-side navigation the page's `h1` gets focus. `app.js` also updates the title-bar path (percent-decoded), the active section tab (`section` in the route table), the status-bar post count and the clock.
+- **Pages** (`js/pages/*.js`): each exports `render(root, ...params)`, sets `document.title`, and writes markup with template literals. Every interpolated value goes through `esc()` (`js/util.js`); only rendered post HTML is inserted raw. Post links use `postHref()` (`encodeURIComponent`, so slugs with `#`/`?` work).
+- **Posts** (`js/posts.js`): `loadPosts()` fetches `/posts.json` (array of file names without `.md`), then every non-hidden `Posts/<slug>.md`, parses them and sorts newest-first (undated last). `getPost(slug)` falls back to fetching the file directly, which is how hidden posts load.
+- **Hidden posts**: file name starts with `_` → `isHidden()` keeps it out of the list, tag counts, post count and prev/next, but `/post/_name` still works. Not secret — the file is deployed.
+- **Post format**: slug = file name without `.md` (Korean, spaces, `#` are fine). Optional front matter, parsed by the small hand-written `parsePost()` (not YAML — keep to `key: value` lines):
   ```
   ---
   title: 글 제목          # defaults to the file name
-  date: 2026-10-14 14:31  # missing → DateTime.MinValue, shown as "—" and sorted last
+  date: 2026-10-14 14:31  # local time; missing → shown as "—" and sorted last
   tags: [C#, blazor]
   ---
   ```
-- **Adding a post**: drop the `.md` into `wwwroot/Posts/` and rebuild — nothing else to register.
-- **Writing a post**: `/write` (`Pages/Write.razor`, not linked in the nav) is an in-browser editor with a markdown toolbar (Ctrl+B/I/E/K) and live preview. Saving downloads `<title>.md` (filename-illegal chars stripped) with the front matter prepended. Drafts autosave to `localStorage`. Browser-side helpers (text formatting, download, storage) are in `wwwroot/js/editor.js`.
-- **Ordering**: `PostInfo.CompareTo` sorts newest-first; `SortedPostByTime` is used by the home page.
-- **Routing**: `/` → `Pages/Home.razor` (post list), `/post/{slug}` → `Pages/Post.razor` (renders HTML via `MarkupString`). Unknown routes go to `Pages/NotFound.razor`, which redirects to `/`.
-- `PostRepository` is injected into every component via `@inject` in `_Imports.razor` (as `repo`), so pages use `repo` without declaring it.
-- **GitHub Pages SPA fallback**: `wwwroot/404.html` is a copy of `wwwroot/index.html` so deep links like `/post/x` boot the Blazor app. Keep the two files in sync when editing `index.html`.
-- Styling uses Blazor CSS isolation (`*.razor.css` next to components, bundled as `Blog.styles.css`) plus global `wwwroot/css/app.css`.
-- Note: `PostRepository` lives under the `Properties/` folder (namespace `Blog.Properties.Post`), not a typical `Services/` location.
+- **Adding a post**: drop the `.md` into `Posts/` — nothing to register (the index is generated).
+- **Writing a post**: `/write` (`js/pages/write.js`, not linked in the nav) — editor with markdown toolbar and Ctrl+B/I/E/K shortcuts (`js/editor.js`), live preview, and a download of `<title>.md` (filename-illegal chars stripped) with front matter prepended. Drafts autosave to `localStorage` key `blog-write-draft` as `{ Title, Tags, Body }`.
+- **Games tab**: `/game` lists `games.json` (`[{ "Title", "Url", "Description"? }]`, http(s) URLs only); shows nothing while loading. Links open in a new tab.
+- **Arts tab**: `/art` — currently an empty page.
 
 ## Design system
 
-Retro / neo-brutalist, but readability first: monospace type (D2Coding from jsDelivr `joungkyun/font-d2coding@1.3.2`, declared via our own `@font-face` as `"D2Coding Web"` at the top of `app.css` — the upstream `d2coding.css` doesn't apply its bold face; weights 400/700 only), square corners, 2px black borders, hard offset shadows, no decorative characters or mascots.
+Retro / neo-brutalist, but readability first: monospace type (D2Coding from jsDelivr `joungkyun/font-d2coding@1.3.2`, declared via our own `@font-face` as `"D2Coding Web"` at the top of `css/app.css` — the upstream `d2coding.css` doesn't apply its bold face; weights 400/700 only), square corners, 2px black borders, hard offset shadows, no decorative characters or mascots.
 
-- Palette tokens live in `:root` of `wwwroot/css/app.css`: `--blue #0856FF` (links, active/primary), `--yellow #FFFF00` (hover/selection background only — never as text color), `--teal #2C6262` (page background, tags), `--white`. Use the tokens instead of raw hex.
-- The whole site is one "window" (`Layout/MainLayout.razor`: blue title bar showing the current path, header nav, status bar).
-- Shared pieces (`.btn`, `.tag`, `.markdown`, boot/loading screen, error UI) are global in `app.css`. Post bodies are injected via `MarkupString`, which does **not** receive CSS-isolation scope attributes — markdown styles must stay global (`.markdown …`), not in `Post.razor.css`.
-- Mobile breakpoint is `max-width: 640px` in each `.razor.css`.
+- Palette tokens live in `:root` of `css/app.css`: `--blue #0856FF` (links, active/primary), `--yellow #FFFF00` (hover/selection background only — never as text color), `--teal #2C6262` (page background, tags), `--white`. Use the tokens instead of raw hex.
+- CSS files: `app.css` (font, tokens, base, shared `.btn`/`.tag`/`.markdown`), `layout.css` (window chrome), and one file per page. There is no CSS isolation: every page renders inside a root class (`.HomePage`, `.PostPage`, `.GamesPage`, `.WritePage`) and its stylesheet prefixes every selector with it, because short class names (`.Tabs`, `.Row`, `.Title`, `.Heading`…) repeat across pages. The window's tabs are `.SectionTabs`/`.SectionTab` to stay distinct from the home page's category `.Tabs`.
+- Mobile breakpoint is `max-width: 640px`.

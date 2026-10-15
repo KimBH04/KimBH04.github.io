@@ -1,9 +1,10 @@
-.Post {
+/* 글 보기, 없는 글 안내 (js/pages/post.js) */
+.PostPage .Post {
     max-width: 74ch;
     margin: 0 auto;
 }
 
-.Back {
+.PostPage .Back {
     display: inline-block;
     margin-bottom: 24px;
     font-size: 13px;
@@ -12,18 +13,18 @@
     text-decoration: none;
 }
 
-    .Back:hover {
+    .PostPage .Back:hover {
         color: var(--ink);
         background: var(--yellow);
     }
 
-.Header {
+.PostPage .Header {
     margin-bottom: 32px;
     padding-bottom: 20px;
     border-bottom: var(--border);
 }
 
-    .Header h1 {
+    .PostPage .Header h1 {
         margin: 0 0 16px;
         font-size: clamp(1.6rem, 1.2rem + 2vw, 2.4rem);
         font-weight: 800;
@@ -31,7 +32,7 @@
         letter-spacing: -0.03em;
     }
 
-.Meta {
+.PostPage .Meta {
     display: flex;
     flex-wrap: wrap;
     gap: 8px 24px;
@@ -39,19 +40,19 @@
     font-size: 13px;
 }
 
-    .Meta div {
+    .PostPage .Meta div {
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
-    .Meta dt {
+    .PostPage .Meta dt {
         font-weight: 700;
         letter-spacing: 0.05em;
         color: var(--muted);
     }
 
-    .Meta dd {
+    .PostPage .Meta dd {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
@@ -59,7 +60,7 @@
     }
 
 /* Prev / next */
-.Pager {
+.PostPage .Pager {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
@@ -68,7 +69,7 @@
     border-top: var(--border);
 }
 
-.PagerLink {
+.PostPage .PagerLink {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -80,27 +81,27 @@
     box-shadow: 3px 3px 0 var(--ink);
 }
 
-    .PagerLink:hover {
+    .PostPage .PagerLink:hover {
         background: var(--yellow);
     }
 
-    .PagerLink:active {
+    .PostPage .PagerLink:active {
         transform: translate(3px, 3px);
         box-shadow: none;
     }
 
-    .PagerLink.Next {
+    .PostPage .PagerLink.Next {
         grid-column: 2;
         text-align: right;
     }
 
-.PagerLabel {
+.PostPage .PagerLabel {
     font-size: 12px;
     font-weight: 700;
     color: var(--muted);
 }
 
-.PagerTitle {
+.PostPage .PagerTitle {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -108,12 +109,12 @@
     color: var(--blue);
 }
 
-.PagerLink:hover .PagerTitle {
+.PostPage .PagerLink:hover .PagerTitle {
     color: var(--ink);
 }
 
 /* Not found dialog */
-.Dialog {
+.PostPage .Dialog {
     max-width: 420px;
     margin: 48px auto;
     background: var(--paper);
@@ -121,7 +122,7 @@
     box-shadow: var(--shadow);
 }
 
-.DialogBar {
+.PostPage .DialogBar {
     padding: 5px 10px;
     font-size: 13px;
     font-weight: 700;
@@ -130,31 +131,31 @@
     border-bottom: var(--border);
 }
 
-.DialogBody {
+.PostPage .DialogBody {
     padding: 20px;
 }
 
-    .DialogBody h1 {
+    .PostPage .DialogBody h1 {
         margin: 0 0 8px;
         font-size: 1.1rem;
     }
 
-    .DialogBody p {
+    .PostPage .DialogBody p {
         margin: 0 0 20px;
         color: var(--muted);
         overflow-wrap: anywhere;
     }
 
-.DialogActions {
+.PostPage .DialogActions {
     text-align: right;
 }
 
 @media (max-width: 640px) {
-    .Pager {
+    .PostPage .Pager {
         grid-template-columns: 1fr;
     }
 
-        .PagerLink.Next {
+        .PostPage .PagerLink.Next {
             grid-column: auto;
         }
 }

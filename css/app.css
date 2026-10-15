@@ -76,7 +76,7 @@ a {
     outline-offset: 2px;
 }
 
-/* FocusOnNavigate moves focus to h1 programmatically; don't draw a ring for it */
+/* 페이지 이동 후 app.js 가 h1 으로 포커스를 옮긴다. 이때는 테두리를 그리지 않는다 */
 h1:focus {
     outline: none;
 }
@@ -295,93 +295,17 @@ h1:focus {
         color: inherit;
     }
 
-/* ===== Boot screen (before Blazor starts) ===== */
-.boot {
-    position: fixed;
-    inset: 0;
-    display: grid;
-    place-content: center;
-    padding: 16px;
-}
-
-.boot-window {
-    width: min(360px, calc(100vw - 32px));
-    background: var(--paper);
-    border: var(--border);
-    box-shadow: 6px 6px 0 var(--ink);
-}
-
-.boot-title {
-    padding: 6px 10px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--white);
-    background: var(--blue);
-    border-bottom: var(--border);
-}
-
-.boot-body {
-    padding: 16px;
-}
-
-.boot-meter {
-    height: 22px;
-    padding: 2px;
-    border: var(--border);
-}
-
-.boot-fill {
-    width: var(--blazor-load-percentage, 0%);
-    height: 100%;
-    background: repeating-linear-gradient(90deg, var(--blue) 0 10px, transparent 10px 13px);
-}
-
-.boot-text {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.loading-progress-text::after {
-    content: var(--blazor-load-percentage-text, "");
-}
-
-/* ===== Errors ===== */
-#blazor-error-ui {
-    display: none;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1000;
-    padding: 10px 48px 10px 16px;
-    font-size: 14px;
-    color: var(--ink);
-    background: var(--yellow);
-    border-top: var(--border);
-}
-
-    #blazor-error-ui .reload {
-        margin-left: 0.5em;
-        font-weight: 700;
+    /* 체크리스트: 글머리 대신 체크박스만 보이게 */
+    .markdown li:has(> input[type="checkbox"]),
+    .markdown li:has(> p > input[type="checkbox"]) {
+        list-style: none;
     }
 
-    #blazor-error-ui .dismiss {
-        position: absolute;
-        right: 16px;
-        top: 8px;
-        cursor: pointer;
+    .markdown li input[type="checkbox"] {
+        margin: 0 0.5em 0 -1.3em;
+        accent-color: var(--blue);
     }
 
-.blazor-error-boundary {
-    padding: 1rem;
-    color: var(--white);
-    background: #B32121;
-    border: var(--border);
+.NoScript {
+    color: var(--muted);
 }
-
-    .blazor-error-boundary::after {
-        content: "오류가 발생했습니다.";
-    }

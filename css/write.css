@@ -1,4 +1,5 @@
-.Heading {
+/* 글 작성 (js/pages/write.js) */
+.WritePage .Heading {
     display: flex;
     flex-wrap: wrap;
     align-items: baseline;
@@ -6,7 +7,7 @@
     margin-bottom: 20px;
 }
 
-    .Heading h1 {
+    .WritePage .Heading h1 {
         margin: 0;
         font-size: 2rem;
         font-weight: 800;
@@ -14,7 +15,7 @@
         letter-spacing: -0.03em;
     }
 
-.FileName {
+.WritePage .FileName {
     font-size: 14px;
     font-weight: 700;
     color: var(--muted);
@@ -22,24 +23,24 @@
 }
 
 /* Fields */
-.Fields {
+.WritePage .Fields {
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 12px;
     margin-bottom: 16px;
 }
 
-.Field {
+.WritePage .Field {
     display: flex;
     min-width: 0;
     border: var(--border);
 }
 
-    .Field:focus-within {
+    .WritePage .Field:focus-within {
         box-shadow: 3px 3px 0 var(--blue);
     }
 
-.Label {
+.WritePage .Label {
     display: grid;
     place-items: center;
     padding: 0 10px;
@@ -51,7 +52,7 @@
     border-right: var(--border);
 }
 
-.Input {
+.WritePage .Input {
     flex: 1;
     min-width: 0;
     padding: 8px 10px;
@@ -64,18 +65,18 @@
     outline: none;
 }
 
-    .Input::placeholder, .Source::placeholder {
+    .WritePage .Input::placeholder, .WritePage .Source::placeholder {
         color: var(--muted);
     }
 
 /* Editor */
-.Editor {
+.WritePage .Editor {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
 }
 
-.Pane {
+.WritePage .Pane {
     display: flex;
     flex-direction: column;
     min-width: 0;
@@ -83,11 +84,11 @@
     border: var(--border);
 }
 
-    .Pane:focus-within {
+    .WritePage .Pane:focus-within {
         box-shadow: 3px 3px 0 var(--blue);
     }
 
-.PaneBar {
+.WritePage .PaneBar {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -100,12 +101,12 @@
     border-bottom: var(--border);
 }
 
-.PaneInfo {
+.WritePage .PaneInfo {
     font-weight: 400;
     color: var(--muted);
 }
 
-.Source {
+.WritePage .Source {
     flex: 1;
     width: 100%;
     padding: 12px 14px;
@@ -121,7 +122,7 @@
     word-break: normal;
 }
 
-.Preview {
+.WritePage .Preview {
     flex: 1;
     overflow: auto;
     padding: 12px 16px;
@@ -129,7 +130,7 @@
 }
 
 /* Actions */
-.Actions {
+.WritePage .Actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -138,7 +139,7 @@
     margin: 16px 0 32px;
 }
 
-.Status {
+.WritePage .Status {
     flex: 1;
     min-width: 0;
     font-size: 13px;
@@ -146,11 +147,11 @@
 }
 
 /* Front matter */
-.FrontMatter {
+.WritePage .FrontMatter {
     border: var(--border);
 }
 
-.FrontMatterCode {
+.WritePage .FrontMatterCode {
     margin: 0;
     padding: 12px 14px;
     overflow-x: auto;
@@ -162,22 +163,22 @@
 }
 
 @media (max-width: 640px) {
-    .Fields, .Editor {
+    .WritePage .Fields, .WritePage .Editor {
         grid-template-columns: 1fr;
     }
 
-    .Pane {
+    .WritePage .Pane {
         height: 50vh;
         min-height: 320px;
     }
 
-    .Status {
+    .WritePage .Status {
         flex-basis: 100%;
     }
 }
 
 /* Markdown toolbar */
-.Toolbar {
+.WritePage .Toolbar {
     display: flex;
     flex-wrap: wrap;
     gap: 6px 10px;
@@ -185,11 +186,11 @@
     border-bottom: var(--hair);
 }
 
-.ToolGroup {
+.WritePage .ToolGroup {
     display: flex;
 }
 
-.Tool {
+.WritePage .Tool {
     min-width: 30px;
     height: 28px;
     padding: 0 7px;
@@ -202,26 +203,26 @@
     cursor: pointer;
 }
 
-    .Tool + .Tool {
+    .WritePage .Tool + .Tool {
         margin-left: -1px;
     }
 
-    .Tool:hover {
+    .WritePage .Tool:hover {
         position: relative;
         background: var(--yellow);
     }
 
-    .Tool:active {
+    .WritePage .Tool:active {
         color: var(--white);
         background: var(--blue);
     }
 
-    .Tool:focus-visible {
+    .WritePage .Tool:focus-visible {
         position: relative;
         z-index: 1;
         outline-offset: 0;
     }
 
-.Bold { font-weight: 800; }
-.Italic { font-style: italic; }
-.Strike { text-decoration: line-through; }
+.WritePage .Bold { font-weight: 800; }
+.WritePage .Italic { font-style: italic; }
+.WritePage .Strike { text-decoration: line-through; }

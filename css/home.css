@@ -1,11 +1,12 @@
-.Heading {
+/* 글 목록 (js/pages/home.js) */
+.HomePage .Heading {
     display: flex;
     align-items: baseline;
     gap: 12px;
     margin-bottom: 20px;
 }
 
-    .Heading h1 {
+    .HomePage .Heading h1 {
         margin: 0;
         font-size: 2rem;
         font-weight: 800;
@@ -13,14 +14,14 @@
         letter-spacing: -0.03em;
     }
 
-.Count {
+.HomePage .Count {
     font-size: 14px;
     font-weight: 700;
     color: var(--muted);
 }
 
 /* Toolbar */
-.Toolbar {
+.HomePage .Toolbar {
     display: flex;
     flex-wrap: wrap;
     align-items: stretch;
@@ -29,12 +30,12 @@
     margin-bottom: 24px;
 }
 
-.Tabs {
+.HomePage .Tabs {
     display: flex;
     flex-wrap: wrap;
 }
 
-.Tab {
+.HomePage .Tab {
     padding: 6px 12px;
     font: inherit;
     font-size: 13px;
@@ -45,38 +46,38 @@
     cursor: pointer;
 }
 
-    .Tab + .Tab {
+    .HomePage .Tab + .Tab {
         margin-left: -2px;
     }
 
-    .Tab span {
+    .HomePage .Tab span {
         margin-left: 6px;
         font-weight: 400;
     }
 
-    .Tab:hover {
+    .HomePage .Tab:hover {
         color: var(--ink);
         background: var(--yellow);
     }
 
-    .Tab[aria-pressed="true"] {
+    .HomePage .Tab[aria-pressed="true"] {
         position: relative;
         color: var(--white);
         background: var(--blue);
     }
 
-.Search {
+.HomePage .Search {
     display: flex;
     flex: 0 1 300px;
     min-width: min(100%, 240px);
     border: var(--border);
 }
 
-    .Search:focus-within {
+    .HomePage .Search:focus-within {
         box-shadow: 3px 3px 0 var(--blue);
     }
 
-.Prompt {
+.HomePage .Prompt {
     display: grid;
     place-items: center;
     padding: 0 10px;
@@ -86,7 +87,7 @@
     border-right: var(--border);
 }
 
-.Search input {
+.HomePage .Search input {
     flex: 1;
     min-width: 0;
     padding: 6px 10px;
@@ -99,12 +100,12 @@
     outline: none;
 }
 
-    .Search input::placeholder {
+    .HomePage .Search input::placeholder {
         color: var(--muted);
     }
 
 /* List */
-.ListHead, .Row {
+.HomePage .ListHead, .HomePage .Row {
     display: grid;
     grid-template-columns: 4ch minmax(0, 1fr) auto 10ch;
     grid-template-areas: "no title tags date";
@@ -113,12 +114,11 @@
     padding: 0 12px;
 }
 
-.No { grid-area: no; }
-.Title { grid-area: title; }
-.Tags { grid-area: tags; }
-.Date { grid-area: date; }
-
-.ListHead {
+.HomePage .No { grid-area: no; }
+.HomePage .Title { grid-area: title; }
+.HomePage .Tags { grid-area: tags; }
+.HomePage .Date { grid-area: date; }
+.HomePage .ListHead {
     padding-bottom: 8px;
     font-size: 12px;
     font-weight: 700;
@@ -128,68 +128,68 @@
     border-bottom: var(--border);
 }
 
-.List ol {
+.HomePage .List ol {
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
-.List li {
+.HomePage .List li {
     border-bottom: var(--hair);
 }
 
-.Row {
+.HomePage .Row {
     padding-top: 14px;
     padding-bottom: 14px;
     color: var(--ink);
     text-decoration: none;
 }
 
-    .Row:hover {
+    .HomePage .Row:hover {
         background: var(--yellow);
     }
 
-    .Row:focus-visible {
+    .HomePage .Row:focus-visible {
         outline: 2px solid var(--blue);
         outline-offset: -2px;
         background: var(--yellow);
     }
 
-    .Row .No, .Row .Date {
+    .HomePage .Row .No, .HomePage .Row .Date {
         font-size: 13px;
         color: var(--muted);
         font-variant-numeric: tabular-nums;
     }
 
-    .Row .Title {
+    .HomePage .Row .Title {
         font-size: 16px;
         font-weight: 700;
         color: var(--blue);
         overflow-wrap: anywhere;
     }
 
-    .Row:hover .Title {
+    .HomePage .Row:hover .Title {
         color: var(--ink);
         text-decoration: underline;
         text-underline-offset: 3px;
     }
 
-    .Row:hover .No, .Row:hover .Date {
+    .HomePage .Row:hover .No, .HomePage .Row:hover .Date {
         color: var(--ink);
     }
 
-.Tags {
+.HomePage .Tags {
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
     gap: 6px;
 }
 
-.Date {
+.HomePage .Date {
     text-align: right;
 }
 
-.Empty {
+.HomePage .Empty {
     padding: 32px;
     text-align: center;
     color: var(--muted);
@@ -197,15 +197,15 @@
 }
 
 @media (max-width: 640px) {
-    .ListHead {
+    .HomePage .ListHead {
         display: none;
     }
 
-    .List ol {
+    .HomePage .List ol {
         border-top: var(--border);
     }
 
-    .Row {
+    .HomePage .Row {
         grid-template-columns: 3ch minmax(0, 1fr) auto;
         grid-template-areas:
             "no title title"
@@ -214,11 +214,11 @@
         column-gap: 12px;
     }
 
-    .Tags {
+    .HomePage .Tags {
         justify-content: flex-start;
     }
 
-    .Search {
+    .HomePage .Search {
         flex-basis: 100%;
     }
 }

@@ -1,3 +1,4 @@
+/* 창 레이아웃: 제목 표시줄, 헤더, 섹션 탭, 상태 표시줄 (index.html) */
 .Window {
     display: flex;
     flex-direction: column;
@@ -89,7 +90,7 @@
     display: flex;
 }
 
-    .Nav ::deep a {
+    .Nav a {
         padding: 4px 12px;
         font-size: 14px;
         font-weight: 700;
@@ -99,17 +100,12 @@
         border: var(--border);
     }
 
-        .Nav ::deep a + a {
+        .Nav a + a {
             margin-left: -2px;
         }
 
-        .Nav ::deep a:hover {
+        .Nav a:hover {
             background: var(--yellow);
-        }
-
-        .Nav ::deep a.active {
-            color: var(--white);
-            background: var(--ink);
         }
 
 /* Content */
@@ -159,7 +155,7 @@
 }
 
 /* Section tabs */
-.Tabs {
+.SectionTabs {
     display: flex;
     gap: 4px;
     padding: 10px 24px 0;
@@ -167,7 +163,7 @@
     border-bottom: var(--border);
 }
 
-.Tab {
+.SectionTab {
     position: relative;
     bottom: -2px;
     padding: 6px 18px;
@@ -180,19 +176,19 @@
     border-bottom: 0;
 }
 
-    .Tab:hover {
+    .SectionTab:hover {
         color: var(--ink);
         background: var(--yellow);
     }
 
-    .Tab.active {
+    .SectionTab.active {
         padding-bottom: 8px;
         color: var(--ink);
         background: var(--paper);
     }
 
 @media (max-width: 640px) {
-    .Tabs {
+    .SectionTabs {
         padding: 8px 16px 0;
     }
 }
