@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent
 OUT = ROOT / "_site"
 
 # 배포되는 파일과 폴더. 그 밖의 파일(serve.py, CLAUDE.md 등)은 올라가지 않는다.
-SITE = ["index.html", "icon-192.png", "games.json", "css", "js", "Posts"]
+SITE = ["index.html", "icon-192.png", "games.json", "arts.json", "css", "js", "Posts", "Arts"]
 
 
 def post_index() -> bytes:

@@ -12,6 +12,7 @@ const routes = [
     { pattern: /^\/post\/([^/]+)\/?$/, page: post, section: "posts" },
     { pattern: /^\/game\/?$/, page: games, section: "game" },
     { pattern: /^\/art\/?$/, page: arts, section: "art" },
+    { pattern: /^\/art\/([^/]+)\/?$/, page: arts, section: "art" },
     { pattern: /^\/write\/?$/, page: write, section: "posts" },
 ];
 
