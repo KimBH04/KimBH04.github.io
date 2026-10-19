@@ -5,6 +5,7 @@ import * as post from "./pages/post.js";
 import * as games from "./pages/games.js";
 import * as arts from "./pages/arts.js";
 import * as write from "./pages/write.js";
+import * as notFound from "./pages/notfound.js";
 
 // section 은 창의 탭(Posts / Games / Arts) 중 어느 것을 활성화할지 정한다.
 const routes = [
@@ -32,12 +33,8 @@ function match(pathname) {
 }
 
 async function render({ focus }) {
-    let route = match(location.pathname);
-    if (!route) {
-        // 알 수 없는 주소는 홈으로 보낸다.
-        history.replaceState(null, "", "/");
-        route = match("/");
-    }
+    // 알 수 없는 주소는 404 페이지(Posts/_404.md)를 보여 준다. 활성 탭은 없다.
+    const route = match(location.pathname) ?? { page: notFound, section: null, params: [] };
 
     updateChrome(route.section);
 

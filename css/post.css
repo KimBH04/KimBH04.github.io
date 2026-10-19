@@ -1,4 +1,4 @@
-/* 글 보기, 없는 글 안내 (js/pages/post.js) */
+/* 글 보기, 404 페이지 (js/pages/post.js, js/pages/notfound.js) */
 .PostPage .Post {
     max-width: 74ch;
     margin: 0 auto;
@@ -111,43 +111,6 @@
 
 .PostPage .PagerLink:hover .PagerTitle {
     color: var(--ink);
-}
-
-/* Not found dialog */
-.PostPage .Dialog {
-    max-width: 420px;
-    margin: 48px auto;
-    background: var(--paper);
-    border: var(--border);
-    box-shadow: var(--shadow);
-}
-
-.PostPage .DialogBar {
-    padding: 5px 10px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--white);
-    background: var(--blue);
-    border-bottom: var(--border);
-}
-
-.PostPage .DialogBody {
-    padding: 20px;
-}
-
-    .PostPage .DialogBody h1 {
-        margin: 0 0 8px;
-        font-size: 1.1rem;
-    }
-
-    .PostPage .DialogBody p {
-        margin: 0 0 20px;
-        color: var(--muted);
-        overflow-wrap: anywhere;
-    }
-
-.PostPage .DialogActions {
-    text-align: right;
 }
 
 @media (max-width: 640px) {
