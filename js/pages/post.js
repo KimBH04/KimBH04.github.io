@@ -41,7 +41,7 @@ export async function render(root, slug) {
     root.innerHTML = `
         <div class="PostPage">
             <article class="Post">
-                <a class="Back" href="/">← posts</a>
+                <a class="Back" href="/post">← posts</a>
 
                 <header class="Header">
                     <h1>${esc(post.title)}</h1>

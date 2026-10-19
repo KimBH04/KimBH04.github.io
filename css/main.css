@@ -1,0 +1,141 @@
+/* 메인 페이지 (js/pages/main.js) */
+.MainPage .VisuallyHidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* 메인 장식 영역: 지금은 비워 둔다 */
+.MainPage .Hero {
+    height: 280px;
+    margin-bottom: 32px;
+    border-bottom: var(--border);
+}
+
+.MainPage .Columns {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.MainPage .Column {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.MainPage .ColumnHead {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: var(--border);
+}
+
+    .MainPage .ColumnHead h2 {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+    }
+
+        .MainPage .ColumnHead h2 a {
+            color: var(--ink);
+            text-decoration: none;
+        }
+
+            .MainPage .ColumnHead h2 a:hover {
+                background: var(--yellow);
+            }
+
+.MainPage .ColumnCount {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.MainPage .List {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+    .MainPage .List li {
+        border-bottom: var(--hair);
+    }
+
+.MainPage .Item {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 10px 8px;
+    color: var(--ink);
+    text-decoration: none;
+}
+
+    .MainPage .Item:hover {
+        background: var(--yellow);
+    }
+
+    .MainPage .Item:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: -2px;
+        background: var(--yellow);
+    }
+
+.MainPage .ItemTitle {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 700;
+    color: var(--blue);
+}
+
+.MainPage .Item:hover .ItemTitle {
+    color: var(--ink);
+}
+
+.MainPage .ItemMeta {
+    flex: none;
+    font-size: 12px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.MainPage .Empty {
+    margin: 0;
+    padding: 16px 8px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.MainPage .More {
+    align-self: flex-end;
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+    .MainPage .More:hover {
+        color: var(--ink);
+        background: var(--yellow);
+    }
+
+@media (max-width: 640px) {
+    .MainPage .Hero {
+        height: 160px;
+        margin-bottom: 24px;
+    }
+
+    .MainPage .Columns {
+        grid-template-columns: 1fr;
+        gap: 32px;
+    }
+}

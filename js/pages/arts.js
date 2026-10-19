@@ -1,7 +1,15 @@
 import { esc } from "../util.js";
 
 /** arts.json — [{ "Title", "Model", "Description"? }]. Model 은 Arts/ 안의 .fbx 경로 (예: "robot/robot.fbx"). */
-async function loadArts() {
+let loading = null;
+
+// 앱 시작 때 한 번 불러오고 이후에는 같은 결과를 쓴다 (app.js 가 미리 호출).
+export function loadArts() {
+    loading ??= fetchArts();
+    return loading;
+}
+
+async function fetchArts() {
     try {
         const res = await fetch("/arts.json", { cache: "no-cache" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -16,7 +24,7 @@ async function loadArts() {
 const isValid = art =>
     typeof art?.Title === "string" && typeof art?.Model === "string" && /\.fbx$/i.test(art.Model) && !art.Model.split("/").includes("..");
 
-const artHref = art => `/art/${encodeURIComponent(art.Model)}`;
+export const artHref = art => `/art/${encodeURIComponent(art.Model)}`;
 const modelUrl = art => `/Arts/${art.Model.split("/").map(encodeURIComponent).join("/")}`;
 
 export async function render(root, model) {

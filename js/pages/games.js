@@ -1,19 +1,31 @@
 import { esc } from "../util.js";
 
 /** games.json — [{ "Title", "Url", "Description"? }]. 파일만 고쳐도 목록이 바뀐다. */
-export async function render(root) {
-    document.title = "Games · KimBH04";
+let loading = null;
 
-    // 불러오는 동안에는 아무것도 표시하지 않는다.
-    let games = [];
+// 앱 시작 때 한 번 불러오고 이후에는 같은 결과를 쓴다 (app.js 가 미리 호출).
+export function loadGames() {
+    loading ??= fetchGames();
+    return loading;
+}
+
+async function fetchGames() {
     try {
         const res = await fetch("/games.json", { cache: "no-cache" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        games = (Array.isArray(data) ? data : []).filter(isValid);
+        return (Array.isArray(data) ? data : []).filter(isValid);
     } catch (e) {
         console.error("games.json 을 읽지 못했습니다", e);
+        return [];
     }
+}
+
+export async function render(root) {
+    document.title = "Games · KimBH04";
+
+    // 불러오는 동안에는 아무것도 표시하지 않는다.
+    const games = await loadGames();
 
     root.innerHTML = games.length === 0
         ? `<section class="GamesPage"><p class="Message">등록된 게임이 없습니다.</p></section>`
