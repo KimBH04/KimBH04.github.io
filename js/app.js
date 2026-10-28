@@ -1,14 +1,19 @@
 import { loadPosts } from "./posts.js";
 import { formatClock } from "./util.js";
+import * as main from "./pages/main.js";
 import * as home from "./pages/home.js";
 import * as post from "./pages/post.js";
 import * as games from "./pages/games.js";
+import { loadGames } from "./pages/games.js";
 import * as arts from "./pages/arts.js";
+import { loadArts } from "./pages/arts.js";
 import * as write from "./pages/write.js";
+import * as notFound from "./pages/notfound.js";
 
 // section 은 창의 탭(Posts / Games / Arts) 중 어느 것을 활성화할지 정한다.
 const routes = [
-    { pattern: /^\/$/, page: home, section: "posts" },
+    { pattern: /^\/$/, page: main, section: null },
+    { pattern: /^\/post\/?$/, page: home, section: "posts" },
     { pattern: /^\/post\/([^/]+)\/?$/, page: post, section: "posts" },
     { pattern: /^\/game\/?$/, page: games, section: "game" },
     { pattern: /^\/art\/?$/, page: arts, section: "art" },
@@ -16,7 +21,7 @@ const routes = [
     { pattern: /^\/write\/?$/, page: write, section: "posts" },
 ];
 
-const main = document.getElementById("main");
+const mainElement = document.getElementById("main");
 
 function match(pathname) {
     for (const route of routes) {
@@ -32,18 +37,14 @@ function match(pathname) {
 }
 
 async function render({ focus }) {
-    let route = match(location.pathname);
-    if (!route) {
-        // 알 수 없는 주소는 홈으로 보낸다.
-        history.replaceState(null, "", "/");
-        route = match("/");
-    }
+    // 알 수 없는 주소는 404 페이지(Posts/_404.md)를 보여 준다. 활성 탭은 없다.
+    const route = match(location.pathname) ?? { page: notFound, section: null, params: [] };
 
     updateChrome(route.section);
 
     // 페이지마다 새 컨테이너를 쓰므로, 느린 페이지가 늦게 끝나도 다른 페이지를 덮어쓰지 않는다.
     const container = document.createElement("div");
-    main.replaceChildren(container);
+    mainElement.replaceChildren(container);
     await route.page.render(container, ...route.params);
 
     // 이동 후 제목으로 포커스를 옮겨 스크린 리더가 새 페이지를 알 수 있게 한다.
@@ -105,5 +106,9 @@ loadPosts()
     .then(posts => { postCount.textContent = `${posts.length} posts`; })
     .catch(() => { postCount.textContent = "0 posts"; })
     .finally(() => { postCount.hidden = false; });
+
+// 글·게임·아트 목록을 미리 불러와 탭을 옮길 때 기다리지 않게 한다.
+loadGames();
+loadArts();
 
 render({ focus: false });

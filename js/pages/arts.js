@@ -5,7 +5,15 @@ import { esc } from "../util.js";
  * Model 은 Arts/ 안의 .fbx 경로 (예: "robot/robot.fbx") → three.js 뷰어로 보여 준다.
  * Page 는 Arts/ 안의 독립 .html 경로 (예: "snow-globe.html") → iframe 으로 띄운다.
  */
-async function loadArts() {
+let loading = null;
+
+// 앱 시작 때 한 번 불러오고 이후에는 같은 결과를 쓴다 (app.js 가 미리 호출).
+export function loadArts() {
+    loading ??= fetchArts();
+    return loading;
+}
+
+async function fetchArts() {
     try {
         const res = await fetch("/arts.json", { cache: "no-cache" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -24,7 +32,7 @@ const isValid = art =>
     (safePath(art.Model) && /\.fbx$/i.test(art.Model) || safePath(art.Page) && /\.html?$/i.test(art.Page));
 
 const artKey = art => art.Model ?? art.Page;
-const artHref = art => `/art/${encodeURIComponent(artKey(art))}`;
+export const artHref = art => `/art/${encodeURIComponent(artKey(art))}`;
 const fileUrl = path => `/Arts/${path.split("/").map(encodeURIComponent).join("/")}`;
 
 export async function render(root, model) {

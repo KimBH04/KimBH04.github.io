@@ -1,24 +1,13 @@
 import { getPost, loadPosts } from "../posts.js";
+import * as notFound from "./notfound.js";
 import { esc, formatDate, formatDateTime, postHref } from "../util.js";
 
 export async function render(root, slug) {
     const [posts, post] = await Promise.all([loadPosts().catch(() => []), getPost(slug)]);
 
+    // 없는 글도 404 페이지를 보여 준다.
     if (!post) {
-        document.title = "Not found · KimBH04";
-        root.innerHTML = `
-            <div class="PostPage">
-                <div class="Dialog" role="alertdialog" aria-labelledby="dialog-title">
-                    <div class="DialogBar">Error</div>
-                    <div class="DialogBody">
-                        <h1 id="dialog-title">글을 찾을 수 없습니다</h1>
-                        <p>"${esc(slug)}" 에 해당하는 글이 없습니다.</p>
-                        <div class="DialogActions">
-                            <a class="btn btn-primary" href="/">OK</a>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
+        await notFound.render(root);
         return;
     }
 
@@ -52,7 +41,7 @@ export async function render(root, slug) {
     root.innerHTML = `
         <div class="PostPage">
             <article class="Post">
-                <a class="Back" href="/">← posts</a>
+                <a class="Back" href="/post">← posts</a>
 
                 <header class="Header">
                     <h1>${esc(post.title)}</h1>
