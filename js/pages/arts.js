@@ -1,6 +1,10 @@
 import { esc } from "../util.js";
 
-/** arts.json — [{ "Title", "Model", "Description"? }]. Model 은 Arts/ 안의 .fbx 경로 (예: "robot/robot.fbx"). */
+/**
+ * arts.json — [{ "Title", "Model" | "Page", "Description"? }].
+ * Model 은 Arts/ 안의 .fbx 경로 (예: "robot/robot.fbx") → three.js 뷰어로 보여 준다.
+ * Page 는 Arts/ 안의 독립 .html 경로 (예: "snow-globe.html") → iframe 으로 띄운다.
+ */
 async function loadArts() {
     try {
         const res = await fetch("/arts.json", { cache: "no-cache" });
@@ -13,16 +17,24 @@ async function loadArts() {
     }
 }
 
-const isValid = art =>
-    typeof art?.Title === "string" && typeof art?.Model === "string" && /\.fbx$/i.test(art.Model) && !art.Model.split("/").includes("..");
+const safePath = path => typeof path === "string" && !path.split("/").includes("..");
 
-const artHref = art => `/art/${encodeURIComponent(art.Model)}`;
-const modelUrl = art => `/Arts/${art.Model.split("/").map(encodeURIComponent).join("/")}`;
+const isValid = art =>
+    typeof art?.Title === "string" &&
+    (safePath(art.Model) && /\.fbx$/i.test(art.Model) || safePath(art.Page) && /\.html?$/i.test(art.Page));
+
+const artKey = art => art.Model ?? art.Page;
+const artHref = art => `/art/${encodeURIComponent(artKey(art))}`;
+const fileUrl = path => `/Arts/${path.split("/").map(encodeURIComponent).join("/")}`;
 
 export async function render(root, model) {
     const arts = await loadArts();
     if (model === undefined) renderList(root, arts);
-    else await renderViewer(root, arts.find(art => art.Model === model), model);
+    else {
+        const art = arts.find(art => artKey(art) === model);
+        if (art?.Page) renderPage(root, art);
+        else await renderViewer(root, art, model);
+    }
 }
 
 function renderList(root, arts) {
@@ -42,6 +54,19 @@ const row = art => `
             <span class="Open" aria-hidden="true">→</span>
         </a>
     </li>`;
+
+// 자체 스크립트와 UI 를 가진 독립 페이지는 블로그 스타일과 섞이지 않도록 iframe 에 띄운다.
+function renderPage(root, art) {
+    document.title = `${art.Title} · KimBH04`;
+    root.innerHTML = `
+        <section class="ArtsPage">
+            <a class="Back" href="/art">← arts</a>
+            <h1>${esc(art.Title)}</h1>
+            ${art.Description?.trim() ? `<p class="Description">${esc(art.Description)}</p>` : ""}
+            <iframe class="Embed" src="${esc(fileUrl(art.Page))}" title="${esc(art.Title)}" allow="fullscreen"></iframe>
+            <p class="Hint"><a href="${esc(fileUrl(art.Page))}" target="_blank" rel="noopener">새 탭에서 크게 보기 ↗</a></p>
+        </section>`;
+}
 
 async function renderViewer(root, art, model) {
     if (!art) {
@@ -84,7 +109,7 @@ async function renderViewer(root, art, model) {
     let viewer;
     try {
         const { mountViewer } = await import("../viewer.js");
-        viewer = await mountViewer(section.querySelector(".Canvas"), modelUrl(art), p => {
+        viewer = await mountViewer(section.querySelector(".Canvas"), fileUrl(art.Model), p => {
             setStatus(`불러오는 중… ${Math.round(p * 100)}%`);
         });
     } catch (e) {

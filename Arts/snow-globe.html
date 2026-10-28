@@ -1,0 +1,1774 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}</style>
+<title>오두막 스노우 글로브</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* Layout: the 3D stage fills the left as a framed window; a birch-and-brass control column sits on the right
+   (stacked under the stage on phones); the controls guide runs as its own strip along the bottom edge. */
+:root{
+  --bg:#e4e9e8; --panel:#f7f9f8; --ink:#1b2526; --muted:#566465; --line:#d0d8d6;
+  --accent:#8f6219; --accent-soft:#efe1c3; --sky:#2f8fc8; --sky-rail:#cfe3ef; --sky-soft:#d6ecf8; --knob:#fdfefd; --knob-edge:#c3ccca; --stage:#0b1020;
+  --spring:#cf6f8d; --summer:#3f7d2e; --autumn:#c24f25; --winter:#3f74a8;
+  --sky-track:linear-gradient(180deg,#4d82c2,#f1cf9f); --sky-thumb:#fff3c4; --sky-ring:#e0a138;
+  --font-display:"Gowun Batang","Noto Serif KR","AppleMyungjo",serif;
+  --font-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",system-ui,sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1214; --panel:#151c1f; --ink:#e2e8e6; --muted:#97a5a2; --line:#28343a;
+    --accent:#d8a956; --accent-soft:#3a2f1d; --sky:#7cc9f2; --sky-rail:#2b3f4c; --sky-soft:#1d3442; --knob:#1d262a; --knob-edge:#34424a; --stage:#05080f;
+    --spring:#eda3b9; --summer:#86c56a; --autumn:#ec8456; --winter:#92b9df; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1214; --panel:#151c1f; --ink:#e2e8e6; --muted:#97a5a2; --line:#28343a;
+  --accent:#d8a956; --accent-soft:#3a2f1d; --sky:#7cc9f2; --sky-rail:#2b3f4c; --sky-soft:#1d3442; --knob:#1d262a; --knob-edge:#34424a; --stage:#05080f;
+  --spring:#eda3b9; --summer:#86c56a; --autumn:#ec8456; --winter:#92b9df; color-scheme:dark;
+}
+html{height:100%;box-sizing:border-box}
+*,*::before,*::after{box-sizing:inherit}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);overflow:hidden;-webkit-tap-highlight-color:transparent}
+#app{
+  height:100%;display:grid;gap:12px;
+  grid-template-columns:minmax(0,1fr) 296px;
+  grid-template-rows:minmax(0,1fr) auto;
+  grid-template-areas:"stage panel" "help panel";
+  padding-block:12px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+#stage{grid-area:stage;position:relative;min-height:0;min-width:0;border-radius:14px;overflow:hidden;background:var(--stage);border:1px solid var(--line)}
+#gl{display:block;width:100%;height:100%;touch-action:none;cursor:grab;outline:none}
+#gl.dragging{cursor:grabbing}
+#panel{
+  grid-area:panel;min-height:0;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+  padding:18px 18px 20px;display:flex;flex-direction:column;gap:22px;
+}
+#help{grid-area:help;font-size:11.5px;line-height:1.55;color:var(--muted);padding:0 2px;min-width:0}
+#help b{font-weight:600;color:var(--ink)}
+#help span{white-space:nowrap}
+#help span + span::before{content:"·";margin:0 7px;color:var(--line)}
+h1{font-family:var(--font-display);font-size:22px;line-height:1.2;margin:0;letter-spacing:-0.01em;text-wrap:balance}
+.eyebrow{font-size:11px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin:0 0 4px}
+.ctl{display:flex;flex-direction:column;gap:8px;min-width:0}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.08em;color:var(--muted)}
+.num{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+
+/* season knob */
+.knob-wrap{display:flex;justify-content:center}
+#knob{width:100%;max-width:200px;aspect-ratio:1;touch-action:none;cursor:grab;display:block;border-radius:50%;outline:none}
+#knob:focus-visible{box-shadow:0 0 0 3px var(--sky-soft),0 0 0 4px var(--sky)}
+#knob .face{fill:var(--knob);stroke:var(--knob-edge);stroke-width:1.5}
+#knob .ring{fill:none;stroke:var(--line);stroke-width:1}
+#knob .tick{stroke:var(--muted);stroke-width:1;opacity:.55}
+#knob .tick.major{stroke:var(--ink);stroke-width:2;opacity:.9}
+#knob .ptr{stroke:var(--sky);stroke-width:4;stroke-linecap:round}
+#knob .ptr-dot{fill:var(--sky)}
+#knob .hub{fill:var(--panel);stroke:var(--knob-edge)}
+#knob text{font-family:var(--font-display);font-size:15px;fill:var(--ink);text-anchor:middle;dominant-baseline:middle;cursor:pointer;user-select:none}
+#knob .sdot{stroke:none}
+.season-read{display:flex;align-items:baseline;justify-content:center;gap:10px;flex-wrap:wrap}
+#seasonName{font-family:var(--font-display);font-size:20px}
+#seasonVal{font-size:13px;color:var(--muted)}
+
+/* time slider: colors follow the sky, not the theme */
+#timeVal{font-size:22px}
+.chip{font-size:12px;padding:2px 9px 2px 7px;border-radius:99px;border:1px solid var(--line);display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--line);display:inline-block}
+.chip.on{color:var(--ink);border-color:#d9a24a}
+.chip.on i{background:#ffc35a;box-shadow:0 0 8px 2px rgba(255,190,80,.7)}
+#time{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;margin:0;cursor:pointer;touch-action:none}
+#time:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+#time::-webkit-slider-runnable-track{height:14px;border-radius:7px;background:var(--sky-track);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+#time::-moz-range-track{height:14px;border-radius:7px;background:var(--sky-track);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+#time::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;margin-top:-5px;background:var(--sky-thumb);border:3px solid var(--sky-ring);box-shadow:0 1px 4px rgba(0,0,0,.35)}
+#time::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--sky-thumb);border:3px solid var(--sky-ring);box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.ticks{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding:0 4px}
+/* time dial: a 24-hour clock; its face takes the current sky colors (not the theme) */
+#timeKnob{width:100%;max-width:200px;aspect-ratio:1;touch-action:none;cursor:grab;display:block;border-radius:50%;outline:none}
+#timeKnob:focus-visible{box-shadow:0 0 0 3px var(--sky-soft),0 0 0 4px var(--sky)}
+#timeKnob .ring{fill:none;stroke:var(--line);stroke-width:1}
+#timeKnob .tick{stroke:var(--muted);stroke-width:1;opacity:.5}
+#timeKnob .tick.major{stroke:var(--ink);stroke-width:2;opacity:.9}
+#timeKnob .face{stroke:var(--knob-edge);stroke-width:1.5}
+#timeKnob .hnum{font-family:var(--font-mono);font-size:12px;fill:var(--muted);text-anchor:middle;dominant-baseline:middle;user-select:none}
+#timeKnob .hnum.major{font-size:14px;fill:var(--ink)}
+#timeKnob .thand{stroke:rgba(20,24,30,.75);stroke-width:4;stroke-linecap:round}
+#timeKnob .hub{fill:var(--panel);stroke:var(--knob-edge)}
+#timeDot{stroke-width:3}
+
+.sub{font-size:12px;color:var(--muted)}
+
+/* latitude */
+.lat-row{display:flex;align-items:center;gap:12px}
+.vcol{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--muted)}
+.vslider{position:relative;width:34px;height:150px;touch-action:none;cursor:ns-resize;border-radius:8px;outline:none}
+.vslider:focus-visible{box-shadow:0 0 0 2px var(--sky)}
+.vtrack{position:absolute;left:50%;top:12px;bottom:12px;width:3px;transform:translateX(-50%);border-radius:3px;background:var(--line)}
+.vtrack::after{content:"";position:absolute;left:-6px;right:-6px;top:50%;height:1px;background:var(--muted);opacity:.6}
+.vthumb{position:absolute;left:50%;width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%);background:var(--sky);border:2px solid var(--knob);box-shadow:0 1px 3px rgba(0,0,0,.3)}
+#earth{width:150px;height:150px;flex:none;display:block}
+.lat-read{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#latVal{font-size:16px}
+/* ambient light slider (theme colors) */
+#ambVal{font-size:16px}
+
+/* thin sky-blue sliders: 3px rail, filled part in sky blue (--p set from script), 14px thumb */
+input.thin{-webkit-appearance:none;appearance:none;height:18px;background:transparent;cursor:pointer;--p:50%}
+input.thin::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:linear-gradient(90deg,var(--sky) 0 var(--p),var(--sky-rail) var(--p) 100%)}
+input.thin::-moz-range-track{height:3px;border-radius:2px;background:var(--sky-rail)}
+input.thin::-moz-range-progress{height:3px;border-radius:2px;background:var(--sky)}
+input.thin::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;margin-top:-5.5px;border-radius:50%;background:var(--sky);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--sky)}
+input.thin::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:var(--sky);border:2px solid var(--panel);box-shadow:0 0 0 1px var(--sky)}
+input.thin:focus-visible{outline:2px solid var(--sky);outline-offset:2px;border-radius:6px}
+
+/* every other interactive bit shares the same sky blue */
+#knob text:hover{fill:var(--sky)}
+.pp summary .lbl::before{color:var(--sky)}
+.pp summary:hover .lbl{color:var(--sky)}
+.pp summary:focus-visible{outline:2px solid var(--sky);outline-offset:3px;border-radius:6px}
+.lens-auto:hover{color:var(--sky)}
+.lens-auto input:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+/* post-processing settings */
+.lens-auto{display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer}
+.lens-auto input{accent-color:var(--sky);width:16px;height:16px;margin:0}
+#panel > *{flex:none}
+#panel{overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.pp summary{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;list-style:none}
+.pp summary::-webkit-details-marker{display:none}
+.pp summary .lbl::before{content:"▸";display:inline-block;margin-right:6px;transition:transform .15s}
+.pp[open] summary .lbl::before{transform:rotate(90deg)}
+.pp-grid{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.pp-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:2px 8px;font-size:12.5px}
+.pp-row input{grid-column:1 / -1;width:100%;margin:0;cursor:pointer;touch-action:none}
+.pp-row input:focus-visible{outline:2px solid var(--sky);outline-offset:3px;border-radius:6px}
+.pp-row .num{font-size:12.5px;color:var(--muted)}
+
+#ambient,#density{width:100%;margin:0;cursor:pointer;touch-action:none}
+#ambient:focus-visible,#density:focus-visible{outline:2px solid var(--sky);outline-offset:3px;border-radius:6px}
+button.mini{font:inherit;font-size:12px;font-weight:500;padding:3px 10px;border-radius:99px;border:1px solid var(--sky);background:transparent;color:var(--sky);cursor:pointer}
+button.mini:hover{background:var(--sky);color:var(--panel)}
+button.mini:focus-visible{outline:2px solid var(--sky);outline-offset:2px}
+
+/* error overlay */
+#err{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(7,10,18,.92);color:#e9eef2;z-index:5}
+#err .box{max-width:440px;display:flex;flex-direction:column;gap:10px}
+#err h2{font-family:var(--font-display);font-size:20px;margin:0}
+#err p{margin:0;font-size:14px;line-height:1.6;color:#c4ced6}
+#err ul{margin:0;padding-left:18px;font-size:13.5px;line-height:1.7;color:#dfe6ec}
+#err .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+#err button{font:inherit;font-size:13px;padding:7px 14px;border-radius:8px;border:1px solid #6a7783;background:#1b2430;color:#fff;cursor:pointer}
+#err button.primary{background:#d8a956;border-color:#d8a956;color:#1b1406}
+#loading{position:absolute;left:14px;bottom:12px;font-size:12px;color:#c9d3dc;opacity:.8;pointer-events:none}
+
+@media (max-width: 759px){
+  #app{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:minmax(0,1fr) auto auto;
+    grid-template-areas:"stage" "panel" "help";
+    gap:8px;padding-block:8px;
+  }
+  #panel{overflow-y:auto;max-height:46vh;max-height:46dvh;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"season lat" "time time" "amb dens" "pp pp" "lens lens" "save save";gap:10px 14px}
+  #ppBox{grid-area:pp}
+  .lens{grid-area:lens}
+  .saverow{grid-area:save}
+  .saverow .sub{display:inline}
+  .amb{grid-area:amb}
+  .dens{grid-area:dens}
+  .amb .ticks,.dens .ticks,#densNote,#ambReset,#densReset{display:none}
+  #ambVal,#densVal{font-size:13px}
+  .ph{display:none}
+  .season{grid-area:season}
+  .lat{grid-area:lat}
+  .time{grid-area:time}
+  #knob{max-width:126px}
+  #timeKnob{max-width:126px}
+  #seasonName{font-size:15px}
+  #seasonVal{font-size:11.5px}
+  .vslider{height:96px;width:30px}
+  #earth{width:92px;height:92px}
+  .lat-row{gap:8px}
+  #latVal{font-size:13px}
+  #timeVal{font-size:17px}
+  .ctl{gap:5px}
+  .vcol{font-size:10px;gap:2px}
+  .lat .lbl,.season .lbl{display:none}
+  #help{font-size:10.5px;line-height:1.5}
+  .sub{display:none}
+}
+@media (max-width: 759px) and (max-height: 640px){
+  #knob{max-width:108px}
+  #timeKnob{max-width:108px}
+  #earth{width:80px;height:80px}
+  .vslider{height:84px}
+}
+@media (prefers-reduced-motion: reduce){ *{scroll-behavior:auto} }
+</style>
+
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="gl" aria-label="스노우 글로브 3D 장면. 탭하면 흔들리고 드래그하면 돌아갑니다." tabindex="-1"></canvas>
+    <div id="loading">장면을 준비하는 중…</div>
+    <div id="err" hidden role="alert">
+      <div class="box">
+        <h2 id="errTitle"></h2>
+        <p id="errBody"></p>
+        <ul id="errFix"></ul>
+        <div class="acts">
+          <button id="errRetry" class="primary" type="button">새로고침</button>
+          <button id="errLite" type="button">가볍게 다시 시작</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <aside id="panel" aria-label="장면 조작">
+    <header class="ph">
+      <p class="eyebrow">Snow globe · 북유럽 산장</p>
+      <h1>오두막 스노우 글로브</h1>
+    </header>
+
+    <section class="ctl season">
+      <div class="lbl">계절 · 태양 황경</div>
+      <div class="knob-wrap">
+        <svg id="knob" viewBox="-18 0 236 200" role="slider" tabindex="0" aria-label="계절 노브" aria-valuemin="0" aria-valuemax="359" aria-valuenow="0">
+          <defs>
+            <radialGradient id="faceShade" cx="40%" cy="35%" r="70%">
+              <stop offset="0" stop-color="#ffffff" stop-opacity=".35"/>
+              <stop offset="1" stop-color="#000000" stop-opacity=".06"/>
+            </radialGradient>
+          </defs>
+          <circle class="ring" cx="100" cy="100" r="78"/>
+          <g id="ticks"></g>
+          <circle class="sdot" id="sdot0" cx="100" cy="30" r="3.2" fill="var(--spring)"/>
+          <circle class="sdot" id="sdot1" cx="170" cy="100" r="3.2" fill="var(--summer)"/>
+          <circle class="sdot" id="sdot2" cx="100" cy="170" r="3.2" fill="var(--autumn)"/>
+          <circle class="sdot" id="sdot3" cx="30" cy="100" r="3.2" fill="var(--winter)"/>
+          <text x="100" y="11" data-peak="0" id="slab0">봄</text>
+          <text x="199" y="101" data-peak="90" id="slab1">여름</text>
+          <text x="100" y="191" data-peak="180" id="slab2">가을</text>
+          <text x="1" y="101" data-peak="270" id="slab3">겨울</text>
+          <g id="knobBody">
+            <circle class="face" cx="100" cy="100" r="58"/>
+            <circle cx="100" cy="100" r="58" fill="url(#faceShade)"/>
+            <line class="ptr" x1="100" y1="92" x2="100" y2="50"/>
+            <circle class="ptr-dot" cx="100" cy="50" r="5"/>
+            <circle class="hub" cx="100" cy="100" r="9"/>
+          </g>
+        </svg>
+      </div>
+      <div class="season-read"><span id="seasonName">봄</span><span id="seasonVal" class="num">0°</span></div>
+    </section>
+
+    <section class="ctl time">
+      <div class="row">
+        <span class="lbl">시간</span>
+        <span id="timeVal" class="num">07:00</span>
+        <span id="lampState" class="chip"><i></i><span>가로등 꺼짐</span></span>
+      </div>
+      <div class="knob-wrap">
+        <svg id="timeKnob" viewBox="-18 0 236 200" role="slider" tabindex="0" aria-label="시간 노브 (24시간)" aria-valuemin="0" aria-valuemax="24" aria-valuenow="7">
+          <defs>
+            <linearGradient id="skyFace" x1="0" y1="0" x2="0" y2="1">
+              <stop id="skyTopStop" offset="0" stop-color="#4c80c2"/>
+              <stop id="skyBotStop" offset="1" stop-color="#f0cc9c"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring" cx="100" cy="100" r="78"/>
+          <line class="tick major" x1="100.00" y1="34.00" x2="100.00" y2="22.00"/><line class="tick" x1="104.32" y1="34.14" x2="104.58" y2="30.15"/><line class="tick" x1="108.61" y1="34.56" x2="109.14" y2="30.60"/><line class="tick" x1="112.88" y1="35.27" x2="113.66" y2="31.35"/><line class="tick" x1="117.08" y1="36.25" x2="119.15" y2="28.52"/><line class="tick" x1="121.22" y1="37.50" x2="122.50" y2="33.71"/><line class="tick" x1="125.26" y1="39.02" x2="126.79" y2="35.33"/><line class="tick" x1="129.19" y1="40.81" x2="130.96" y2="37.22"/><line class="tick" x1="133.00" y1="42.84" x2="137.00" y2="35.91"/><line class="tick" x1="136.67" y1="45.12" x2="138.89" y2="41.80"/><line class="tick" x1="140.18" y1="47.64" x2="142.61" y2="44.47"/><line class="tick" x1="143.52" y1="50.38" x2="146.15" y2="47.37"/><line class="tick" x1="146.67" y1="53.33" x2="152.33" y2="47.67"/><line class="tick" x1="149.62" y1="56.48" x2="152.63" y2="53.85"/><line class="tick" x1="152.36" y1="59.82" x2="155.53" y2="57.39"/><line class="tick" x1="154.88" y1="63.33" x2="158.20" y2="61.11"/><line class="tick" x1="157.16" y1="67.00" x2="164.09" y2="63.00"/><line class="tick" x1="159.19" y1="70.81" x2="162.78" y2="69.04"/><line class="tick" x1="160.98" y1="74.74" x2="164.67" y2="73.21"/><line class="tick" x1="162.50" y1="78.78" x2="166.29" y2="77.50"/><line class="tick" x1="163.75" y1="82.92" x2="171.48" y2="80.85"/><line class="tick" x1="164.73" y1="87.12" x2="168.65" y2="86.34"/><line class="tick" x1="165.44" y1="91.39" x2="169.40" y2="90.86"/><line class="tick" x1="165.86" y1="95.68" x2="169.85" y2="95.42"/><line class="tick major" x1="166.00" y1="100.00" x2="178.00" y2="100.00"/><line class="tick" x1="165.86" y1="104.32" x2="169.85" y2="104.58"/><line class="tick" x1="165.44" y1="108.61" x2="169.40" y2="109.14"/><line class="tick" x1="164.73" y1="112.88" x2="168.65" y2="113.66"/><line class="tick" x1="163.75" y1="117.08" x2="171.48" y2="119.15"/><line class="tick" x1="162.50" y1="121.22" x2="166.29" y2="122.50"/><line class="tick" x1="160.98" y1="125.26" x2="164.67" y2="126.79"/><line class="tick" x1="159.19" y1="129.19" x2="162.78" y2="130.96"/><line class="tick" x1="157.16" y1="133.00" x2="164.09" y2="137.00"/><line class="tick" x1="154.88" y1="136.67" x2="158.20" y2="138.89"/><line class="tick" x1="152.36" y1="140.18" x2="155.53" y2="142.61"/><line class="tick" x1="149.62" y1="143.52" x2="152.63" y2="146.15"/><line class="tick" x1="146.67" y1="146.67" x2="152.33" y2="152.33"/><line class="tick" x1="143.52" y1="149.62" x2="146.15" y2="152.63"/><line class="tick" x1="140.18" y1="152.36" x2="142.61" y2="155.53"/><line class="tick" x1="136.67" y1="154.88" x2="138.89" y2="158.20"/><line class="tick" x1="133.00" y1="157.16" x2="137.00" y2="164.09"/><line class="tick" x1="129.19" y1="159.19" x2="130.96" y2="162.78"/><line class="tick" x1="125.26" y1="160.98" x2="126.79" y2="164.67"/><line class="tick" x1="121.22" y1="162.50" x2="122.50" y2="166.29"/><line class="tick" x1="117.08" y1="163.75" x2="119.15" y2="171.48"/><line class="tick" x1="112.88" y1="164.73" x2="113.66" y2="168.65"/><line class="tick" x1="108.61" y1="165.44" x2="109.14" y2="169.40"/><line class="tick" x1="104.32" y1="165.86" x2="104.58" y2="169.85"/><line class="tick major" x1="100.00" y1="166.00" x2="100.00" y2="178.00"/><line class="tick" x1="95.68" y1="165.86" x2="95.42" y2="169.85"/><line class="tick" x1="91.39" y1="165.44" x2="90.86" y2="169.40"/><line class="tick" x1="87.12" y1="164.73" x2="86.34" y2="168.65"/><line class="tick" x1="82.92" y1="163.75" x2="80.85" y2="171.48"/><line class="tick" x1="78.78" y1="162.50" x2="77.50" y2="166.29"/><line class="tick" x1="74.74" y1="160.98" x2="73.21" y2="164.67"/><line class="tick" x1="70.81" y1="159.19" x2="69.04" y2="162.78"/><line class="tick" x1="67.00" y1="157.16" x2="63.00" y2="164.09"/><line class="tick" x1="63.33" y1="154.88" x2="61.11" y2="158.20"/><line class="tick" x1="59.82" y1="152.36" x2="57.39" y2="155.53"/><line class="tick" x1="56.48" y1="149.62" x2="53.85" y2="152.63"/><line class="tick" x1="53.33" y1="146.67" x2="47.67" y2="152.33"/><line class="tick" x1="50.38" y1="143.52" x2="47.37" y2="146.15"/><line class="tick" x1="47.64" y1="140.18" x2="44.47" y2="142.61"/><line class="tick" x1="45.12" y1="136.67" x2="41.80" y2="138.89"/><line class="tick" x1="42.84" y1="133.00" x2="35.91" y2="137.00"/><line class="tick" x1="40.81" y1="129.19" x2="37.22" y2="130.96"/><line class="tick" x1="39.02" y1="125.26" x2="35.33" y2="126.79"/><line class="tick" x1="37.50" y1="121.22" x2="33.71" y2="122.50"/><line class="tick" x1="36.25" y1="117.08" x2="28.52" y2="119.15"/><line class="tick" x1="35.27" y1="112.88" x2="31.35" y2="113.66"/><line class="tick" x1="34.56" y1="108.61" x2="30.60" y2="109.14"/><line class="tick" x1="34.14" y1="104.32" x2="30.15" y2="104.58"/><line class="tick major" x1="34.00" y1="100.00" x2="22.00" y2="100.00"/><line class="tick" x1="34.14" y1="95.68" x2="30.15" y2="95.42"/><line class="tick" x1="34.56" y1="91.39" x2="30.60" y2="90.86"/><line class="tick" x1="35.27" y1="87.12" x2="31.35" y2="86.34"/><line class="tick" x1="36.25" y1="82.92" x2="28.52" y2="80.85"/><line class="tick" x1="37.50" y1="78.78" x2="33.71" y2="77.50"/><line class="tick" x1="39.02" y1="74.74" x2="35.33" y2="73.21"/><line class="tick" x1="40.81" y1="70.81" x2="37.22" y2="69.04"/><line class="tick" x1="42.84" y1="67.00" x2="35.91" y2="63.00"/><line class="tick" x1="45.12" y1="63.33" x2="41.80" y2="61.11"/><line class="tick" x1="47.64" y1="59.82" x2="44.47" y2="57.39"/><line class="tick" x1="50.38" y1="56.48" x2="47.37" y2="53.85"/><line class="tick" x1="53.33" y1="53.33" x2="47.67" y2="47.67"/><line class="tick" x1="56.48" y1="50.38" x2="53.85" y2="47.37"/><line class="tick" x1="59.82" y1="47.64" x2="57.39" y2="44.47"/><line class="tick" x1="63.33" y1="45.12" x2="61.11" y2="41.80"/><line class="tick" x1="67.00" y1="42.84" x2="63.00" y2="35.91"/><line class="tick" x1="70.81" y1="40.81" x2="69.04" y2="37.22"/><line class="tick" x1="74.74" y1="39.02" x2="73.21" y2="35.33"/><line class="tick" x1="78.78" y1="37.50" x2="77.50" y2="33.71"/><line class="tick" x1="82.92" y1="36.25" x2="80.85" y2="28.52"/><line class="tick" x1="87.12" y1="35.27" x2="86.34" y2="31.35"/><line class="tick" x1="91.39" y1="34.56" x2="90.86" y2="30.60"/><line class="tick" x1="95.68" y1="34.14" x2="95.42" y2="30.15"/>
+          <text class="hnum major" x="100.0" y="13.0">0</text><text class="hnum" x="162.2" y="38.8">3</text><text class="hnum major" x="188.0" y="101.0">6</text><text class="hnum" x="162.2" y="163.2">9</text><text class="hnum major" x="100.0" y="189.0">12</text><text class="hnum" x="37.8" y="163.2">15</text><text class="hnum major" x="12.0" y="101.0">18</text><text class="hnum" x="37.8" y="38.8">21</text>
+          <circle class="face" cx="100" cy="100" r="58" fill="url(#skyFace)"/>
+          <circle cx="100" cy="100" r="58" fill="url(#faceShade)"/>
+          <g id="timeHand">
+            <line class="thand" x1="100" y1="92" x2="100" y2="52"/>
+            <circle id="timeDot" cx="100" cy="50" r="7"/>
+            <circle class="hub" cx="100" cy="100" r="9"/>
+          </g>
+        </svg>
+      </div>
+      <div class="sub">태양 고도 <span id="sunAlt" class="num">+8.9°</span></div>
+    </section>
+
+    <section class="ctl lat">
+      <div class="lbl">위도</div>
+      <div class="lat-row">
+        <div class="vcol">
+          <span>북 90°</span>
+          <div id="latSlider" class="vslider" role="slider" tabindex="0" aria-label="위도" aria-orientation="vertical" aria-valuemin="-90" aria-valuemax="90" aria-valuenow="37.57">
+            <div class="vtrack"></div><div class="vthumb" id="latThumb"></div>
+          </div>
+          <span>남 90°</span>
+        </div>
+        <canvas id="earth" aria-label="현재 위도를 표시한 지구"></canvas>
+      </div>
+      <div class="lat-read"><span id="latVal" class="num">북위 37.57°</span><button id="seoul" class="mini" type="button">서울로</button></div>
+    </section>
+
+    <section class="ctl amb">
+      <div class="row">
+        <label class="lbl" for="ambient">환경광</label>
+        <span id="ambVal" class="num">100%</span>
+        <button id="ambReset" class="mini" type="button">기본값</button>
+      </div>
+      <input type="range" class="thin" id="ambient" min="0" max="300" step="5" value="100" aria-label="환경광 세기 (퍼센트)">
+      <div class="ticks num"><span>0%</span><span>100%</span><span>200%</span><span>300%</span></div>
+    </section>
+
+    <section class="ctl dens">
+      <div class="row">
+        <label class="lbl" for="density">입자 밀도</label>
+        <span id="densVal" class="num">1.39 개/m³</span>
+        <button id="densReset" class="mini" type="button">기본값</button>
+      </div>
+      <input type="range" class="thin" id="density" min="1" max="5" step="0.01" value="1.39" aria-label="입자 밀도 (세제곱미터당 입자 수)">
+      <div class="ticks num"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+      <div class="sub" id="densNote">계절 정점 기준 최대 900개 · 글로브 안 공간 약 648 m³ (1칸 = 2 m)</div>
+    </section>
+
+    <details class="ctl pp" id="ppBox" open>
+      <summary><span class="lbl">후처리 설정</span><button id="ppReset" class="mini" type="button">추천값</button></summary>
+      <div class="pp-grid">
+        <div class="pp-row">
+          <label for="pp_knee">톤 커브 시작점</label><span class="num" id="ppv_knee">0.82</span>
+          <input type="range" class="thin" id="pp_knee" min="0.5" max="1.0" step="0.01" value="0.82" aria-label="톤 커브 시작점">
+        </div>
+        <div class="pp-row">
+          <label for="pp_bloomDay">블룸 세기 · 낮</label><span class="num" id="ppv_bloomDay">0.10</span>
+          <input type="range" class="thin" id="pp_bloomDay" min="0" max="1.5" step="0.01" value="0.1" aria-label="블룸 세기 · 낮">
+        </div>
+        <div class="pp-row">
+          <label for="pp_bloomNight">블룸 세기 · 밤</label><span class="num" id="ppv_bloomNight">0.75</span>
+          <input type="range" class="thin" id="pp_bloomNight" min="0" max="1.5" step="0.01" value="0.75" aria-label="블룸 세기 · 밤">
+        </div>
+        <div class="pp-row">
+          <label for="pp_radius">블룸 퍼짐 반경</label><span class="num" id="ppv_radius">0.45</span>
+          <input type="range" class="thin" id="pp_radius" min="0" max="1" step="0.01" value="0.45" aria-label="블룸 퍼짐 반경">
+        </div>
+        <div class="pp-row">
+          <label for="pp_thrDay">블룸 시작 밝기 · 낮</label><span class="num" id="ppv_thrDay">1.00</span>
+          <input type="range" class="thin" id="pp_thrDay" min="0.5" max="1.5" step="0.01" value="1.0" aria-label="블룸 시작 밝기 · 낮">
+        </div>
+        <div class="pp-row">
+          <label for="pp_thrNight">블룸 시작 밝기 · 밤</label><span class="num" id="ppv_thrNight">0.95</span>
+          <input type="range" class="thin" id="pp_thrNight" min="0.5" max="1.5" step="0.01" value="0.95" aria-label="블룸 시작 밝기 · 밤">
+        </div>
+        <div class="pp-row">
+          <label for="pp_vigDay">비네팅 · 낮</label><span class="num" id="ppv_vigDay">0.18</span>
+          <input type="range" class="thin" id="pp_vigDay" min="0" max="0.6" step="0.01" value="0.18" aria-label="비네팅 · 낮">
+        </div>
+        <div class="pp-row">
+          <label for="pp_vigNight">비네팅 · 밤</label><span class="num" id="ppv_vigNight">0.30</span>
+          <input type="range" class="thin" id="pp_vigNight" min="0" max="0.6" step="0.01" value="0.3" aria-label="비네팅 · 밤">
+        </div>
+      </div>
+      <p class="sub" id="ppNote">낮/밤 값은 가로등이 켜지고 꺼질 때 함께 바뀌어요.</p>
+    </details>
+
+    <details class="ctl pp lens" id="lensBox" open>
+      <summary><span class="lbl">렌즈 설정</span><button id="lensReset" class="mini" type="button">기본 렌즈</button></summary>
+      <div class="pp-grid">
+        <div class="pp-row">
+          <label for="lens_focal">초점 거리 (mm)</label><span class="num" id="lensv_focal">26</span>
+          <input type="range" class="thin" id="lens_focal" min="14" max="200" step="1" value="26" aria-label="초점 거리 (mm)">
+        </div>
+        <div class="pp-row">
+          <label for="lens_fstop">조리개 (f/)</label><span class="num" id="lensv_fstop">16</span>
+          <input type="range" class="thin" id="lens_fstop" min="1.4" max="22" step="0.1" value="16" aria-label="조리개 (f/)">
+        </div>
+        <div class="pp-row">
+          <label for="lens_focusM">초점 맞출 거리 (m)</label><span class="num" id="lensv_focusM">18.5</span>
+          <input type="range" class="thin" id="lens_focusM" min="2" max="60" step="0.5" value="18.5" aria-label="초점 맞출 거리 (m)">
+        </div>
+        <label class="lens-auto"><input type="checkbox" id="lens_auto" checked> 초점 자동 (글로브 중심에 맞춤)</label>
+      </div>
+      <p class="sub" id="lensNote">풀프레임(36×24 mm) 기준이에요. 조리개 숫자가 작을수록 초점 밖이 흐려져요.</p>
+    </details>
+
+    <section class="ctl saverow">
+      <div class="row"><span class="sub" id="saveNote">설정은 이 브라우저에 자동 저장돼요.</span><button id="saveReset" class="mini" type="button">설정 초기화</button></div>
+    </section>
+  </aside>
+
+  <footer id="help" aria-label="조작법">
+    <span><b>짧게 탭/클릭</b> 또는 <b>스페이스바</b> = 흔들기</span><span><b>드래그</b> = 회전</span><span><b>우클릭 드래그</b> 또는 <b>두 손가락 드래그</b> = 이동</span><span><b>스크롤</b> 또는 <b>핀치</b> = 확대/축소</span><span><b>계절 노브</b> = 계절</span><span><b>시계 노브</b> = 시간</span><span><b>세로 슬라이더</b> = 위도</span><span><b>환경광 슬라이더</b> = 주변 밝기</span><span><b>입자 밀도 슬라이더</b> = 입자 양</span><span><b>후처리 설정</b> = 화면 효과</span><span><b>렌즈 설정</b> = 초점 거리·조리개·초점</span>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/BokehShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/BokehPass.js"></script>
+<script>
+(function(){
+'use strict';
+const $ = s => document.querySelector(s);
+const D2R = Math.PI / 180;
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const mod = (a, n) => ((a % n) + n) % n;
+const circDist = (a, b) => { const d = Math.abs(mod(a - b, 360)); return Math.min(d, 360 - d); };
+function mulberry(seed){ return function(){ seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const hexRGB = h => [(h >> 16 & 255) / 255, (h >> 8 & 255) / 255, (h & 255) / 255];
+const lerpRGB = (a, b, t) => [lerp(a[0], b[0], t), lerp(a[1], b[1], t), lerp(a[2], b[2], t)];
+const rgbCSS = c => `rgb(${Math.round(clamp(c[0],0,1)*255)},${Math.round(clamp(c[1],0,1)*255)},${Math.round(clamp(c[2],0,1)*255)})`;
+
+/* ---------------- state & astronomy ---------------- */
+const SEOUL = 37.57;
+// Real-world scale for the particle density: 1 scene unit = 2 m (the cabin is about 3.4 m wide).
+// Water space inside the globe = the sphere (radius 2.9 units) above the floor, which sits 1.2 units below its centre.
+const UNIT_M = 2, GLOBE_R = 2.9, FLOOR_DROP = 1.2;
+const INTERIOR_M3 = (4 / 3 * Math.PI * GLOBE_R ** 3 - Math.PI * (GLOBE_R - FLOOR_DROP) ** 2 * (3 * GLOBE_R - (GLOBE_R - FLOOR_DROP)) / 3) * UNIT_M ** 3;
+const DENS_MIN = 1, DENS_MAX = 5, DENS_DEFAULT = 900 / INTERIOR_M3;   // default keeps the original 900 per season peak
+const state = { knob: 0, season: 0, time: 7, lat: SEOUL, ambient: 1, density: DENS_DEFAULT, maxCount: 900 };
+const SEASONS = ['봄', '여름', '가을', '겨울'];
+let sun = null;
+let controlBusy = 0;
+
+function sunInfo(season, time, lat){
+  const dec = Math.asin(Math.sin(23.44 * D2R) * Math.sin(season * D2R));
+  const H = 15 * (time - 12) * D2R;
+  const phi = lat * D2R;
+  const sinh = clamp(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H), -1, 1);
+  const east = -Math.cos(dec) * Math.sin(H);
+  const north = Math.sin(dec) * Math.cos(phi) - Math.cos(dec) * Math.cos(H) * Math.sin(phi);
+  const L = Math.hypot(east, north, sinh) || 1;
+  // scene axes: +x = east, +y = up, -z = north
+  return { h: Math.asin(sinh) / D2R, dec: dec / D2R, H: H / D2R, dir: [east / L, sinh / L, -north / L] };
+}
+
+const SKY = [
+  [-90, 0x03050c, 0x060a16],
+  [-18, 0x050819, 0x0b1430],
+  [-10, 0x0a1335, 0x1f2650],
+  [-4,  0x18245a, 0x5f4b7a],
+  [0,   0x2d4682, 0xd98868],
+  [4,   0x40669f, 0xefa96f],
+  [10,  0x4c80c2, 0xf0cc9c],
+  [22,  0x3f7dcc, 0xb2d3ee],
+  [45,  0x2f70cc, 0x9dcaf0],
+  [90,  0x2a6bcb, 0x95c5f0]
+];
+function skyAt(h){
+  for (let i = 0; i < SKY.length - 1; i++){
+    const a = SKY[i], b = SKY[i + 1];
+    if (h <= b[0]){
+      const t = clamp((h - a[0]) / (b[0] - a[0]), 0, 1);
+      return { top: lerpRGB(hexRGB(a[1]), hexRGB(b[1]), t), bot: lerpRGB(hexRGB(a[2]), hexRGB(b[2]), t) };
+    }
+  }
+  const z = SKY[SKY.length - 1];
+  return { top: hexRGB(z[1]), bot: hexRGB(z[2]) };
+}
+function seasonLabel(s){
+  for (let k = 0; k < 4; k++) if (circDist(s, k * 90) < 1) return SEASONS[k];
+  const k = Math.floor(s / 90) % 4;
+  return SEASONS[k] + ' → ' + SEASONS[(k + 1) % 4];
+}
+function seasonCounts(s){
+  return [0, 90, 180, 270].map(P => {
+    const x = Math.min(circDist(s, P), 90) / 90 * Math.PI / 2;
+    return Math.max(0, Math.round(state.maxCount * Math.cos(x)));
+  });
+}
+// south of the equator the seasons run opposite to the solar longitude on the knob
+const visSeason = () => state.lat < 0 ? mod(mod(state.knob, 360) + 180, 360) : mod(state.knob, 360);
+const fmtTime = t => { const m = Math.round(t * 60); return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
+const fmtLat = v => Math.abs(v) < 0.005 ? '적도 0.00°' : (v > 0 ? '북위 ' : '남위 ') + Math.abs(v).toFixed(2) + '°';
+
+/* ---------------- UI ---------------- */
+const knob = $('#knob'), knobBody = $('#knobBody'), timeKnob = $('#timeKnob'), timeHand = $('#timeHand'), latSlider = $('#latSlider'), latThumb = $('#latThumb');
+(function buildTicks(){
+  const g = $('#ticks'); let html = '';
+  for (let a = 0; a < 360; a += 5){
+    const major = a % 90 === 0, mid = a % 45 === 0;
+    const r1 = 66, r2 = major ? 78 : (mid ? 75 : 72);
+    const x1 = 100 + r1 * Math.sin(a * D2R), y1 = 100 - r1 * Math.cos(a * D2R);
+    const x2 = 100 + r2 * Math.sin(a * D2R), y2 = 100 - r2 * Math.cos(a * D2R);
+    html += `<line class="tick${major ? ' major' : ''}" x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}"/>`;
+  }
+  g.innerHTML = html;
+})();
+
+let earthQueued = false;
+function update(){
+  state.season = mod(state.knob, 360);
+  if (state.season >= 359.9995) state.season = 0;
+  sun = sunInfo(state.season, state.time, state.lat);
+  state.vis = visSeason();
+  const flip = state.lat < 0 ? 2 : 0, VARS = ['--spring', '--summer', '--autumn', '--winter'];
+  for (let k = 0; k < 4; k++){ const j = (k + flip) % 4; $('#slab' + k).textContent = SEASONS[j]; $('#sdot' + k).setAttribute('fill', `var(${VARS[j]})`); }
+  // knob
+  knobBody.setAttribute('transform', `rotate(${state.knob.toFixed(2)} 100 100)`);
+  const sl = seasonLabel(state.vis);
+  $('#seasonName').textContent = sl;
+  $('#seasonVal').textContent = '계절 값 ' + state.season.toFixed(0) + '°';
+  knob.setAttribute('aria-valuenow', state.season.toFixed(0));
+  knob.setAttribute('aria-valuetext', `${sl}, ${state.season.toFixed(0)}도`);
+  // time
+  $('#timeVal').textContent = fmtTime(state.time);
+  const on = sun.h < 0;
+  const chip = $('#lampState');
+  chip.classList.toggle('on', on);
+  chip.lastElementChild.textContent = on ? '가로등 켜짐' : '가로등 꺼짐';
+  $('#sunAlt').textContent = (sun.h >= 0 ? '+' : '−') + Math.abs(sun.h).toFixed(1) + '°';
+  const sky = skyAt(sun.h);
+  $('#skyTopStop').setAttribute('stop-color', rgbCSS(sky.top));
+  $('#skyBotStop').setAttribute('stop-color', rgbCSS(sky.bot));
+  const dot = $('#timeDot'); dot.setAttribute('fill', on ? '#dfe6f6' : '#fff2bf'); dot.setAttribute('stroke', on ? '#7d8db5' : '#e19a2e');
+  timeHand.setAttribute('transform', `rotate(${(state.time * 15).toFixed(2)} 100 100)`);
+  timeKnob.setAttribute('aria-valuenow', state.time.toFixed(2));
+  timeKnob.setAttribute('aria-valuetext', fmtTime(state.time) + (on ? ', 가로등 켜짐' : ', 가로등 꺼짐'));
+  // latitude
+  latThumb.style.top = `calc(12px + (100% - 24px) * ${((90 - state.lat) / 180).toFixed(5)})`;
+  latSlider.setAttribute('aria-valuenow', state.lat.toFixed(2));
+  latSlider.setAttribute('aria-valuetext', fmtLat(state.lat));
+  $('#latVal').textContent = fmtLat(state.lat);
+  if (!earthQueued){ earthQueued = true; requestAnimationFrame(() => { earthQueued = false; drawEarth(); }); }
+  if (scene3d) scene3d.onState();
+}
+
+/* knob interaction */
+function knobAngle(e){
+  const r = knob.getBoundingClientRect();
+  return Math.atan2(e.clientX - (r.left + r.width / 2), -(e.clientY - (r.top + r.height / 2))) / D2R;
+}
+let kd = null;
+knob.addEventListener('pointerdown', e => {
+  if (e.button !== 0 && e.pointerType === 'mouse') return;
+  e.preventDefault();
+  try { knob.setPointerCapture(e.pointerId); } catch(_){}
+  kd = { id: e.pointerId, a: knobAngle(e), moved: 0, peak: e.target.getAttribute && e.target.getAttribute('data-peak') };
+  controlBusy++; knob.style.cursor = 'grabbing';
+  knob.focus({ preventScroll: true });
+});
+knob.addEventListener('pointermove', e => {
+  if (!kd || e.pointerId !== kd.id) return;
+  const a = knobAngle(e);
+  const d = mod(a - kd.a + 180, 360) - 180;
+  kd.a = a; kd.moved += Math.abs(d);
+  if (kd.peak != null && kd.moved < 3) return;
+  state.knob += d; update();
+});
+function knobEnd(e){
+  if (!kd || e.pointerId !== kd.id) return;
+  if (kd.peak != null && kd.moved < 3 && e.type === 'pointerup'){
+    const p = +kd.peak; const cur = mod(state.knob, 360);
+    const d = mod(p - cur + 180, 360) - 180;
+    state.knob += d; update();
+  }
+  kd = null; controlBusy = Math.max(0, controlBusy - 1); knob.style.cursor = '';
+}
+knob.addEventListener('pointerup', knobEnd);
+knob.addEventListener('pointercancel', knobEnd);
+knob.addEventListener('wheel', e => { if (document.activeElement !== knob) return; e.preventDefault(); state.knob += clamp(e.deltaY, -60, 60) * 0.12; update(); }, { passive: false });
+knob.addEventListener('keydown', e => {
+  const step = e.shiftKey ? 1 : 5; let d = 0;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowUp') d = step;
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') d = -step;
+  else if (e.key === 'PageUp') d = 45; else if (e.key === 'PageDown') d = -45;
+  if (d){ e.preventDefault(); state.knob += d; update(); }
+});
+
+/* time slider */
+/* time dial (24-hour clock): drag around, wraps past midnight */
+function timeAngle(e){ const r = timeKnob.getBoundingClientRect(); return Math.atan2(e.clientX - (r.left + r.width / 2), -(e.clientY - (r.top + r.height / 2))) / D2R; }
+const setTime = t => { state.time = Math.round(mod(t, 24) * 60) / 60; update(); };
+let td = null;
+timeKnob.addEventListener('pointerdown', e => {
+  if (e.button !== 0 && e.pointerType === 'mouse') return;
+  e.preventDefault(); try { timeKnob.setPointerCapture(e.pointerId); } catch(_){}
+  td = { id: e.pointerId, a: timeAngle(e) }; controlBusy++; timeKnob.style.cursor = 'grabbing'; timeKnob.focus({ preventScroll: true });
+});
+timeKnob.addEventListener('pointermove', e => {
+  if (!td || e.pointerId !== td.id) return;
+  const a = timeAngle(e); const d = mod(a - td.a + 180, 360) - 180; td.a = a; td.acc = (td.acc || 0) + d / 15;
+  setTime((td.base != null ? td.base : (td.base = state.time)) + td.acc);
+});
+function timeEnd(e){ if (!td || e.pointerId !== td.id) return; td = null; controlBusy = Math.max(0, controlBusy - 1); timeKnob.style.cursor = ''; }
+timeKnob.addEventListener('pointerup', timeEnd);
+timeKnob.addEventListener('pointercancel', timeEnd);
+timeKnob.addEventListener('wheel', e => { if (document.activeElement !== timeKnob) return; e.preventDefault(); setTime(state.time + clamp(e.deltaY, -60, 60) / 120); }, { passive: false });
+timeKnob.addEventListener('keydown', e => {
+  const step = e.shiftKey ? 1 : 0.25; let d = 0;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowUp') d = step; else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') d = -step;
+  else if (e.key === 'PageUp') d = 3; else if (e.key === 'PageDown') d = -3;
+  if (d){ e.preventDefault(); setTime(state.time + d); }
+});
+
+/* latitude slider (custom vertical) */
+let ld = null;
+function latFromEvent(e){
+  const r = latSlider.getBoundingClientRect();
+  const t = clamp((e.clientY - r.top - 12) / (r.height - 24), 0, 1);
+  return Math.round((90 - t * 180) * 100) / 100;
+}
+latSlider.addEventListener('pointerdown', e => {
+  if (e.button !== 0 && e.pointerType === 'mouse') return;
+  e.preventDefault(); try { latSlider.setPointerCapture(e.pointerId); } catch(_){}
+  ld = e.pointerId; controlBusy++; latSlider.focus({ preventScroll: true });
+  state.lat = latFromEvent(e); update();
+});
+latSlider.addEventListener('pointermove', e => { if (ld !== e.pointerId) return; state.lat = latFromEvent(e); update(); });
+function latEnd(e){ if (ld !== e.pointerId) return; ld = null; controlBusy = Math.max(0, controlBusy - 1); }
+latSlider.addEventListener('pointerup', latEnd);
+latSlider.addEventListener('pointercancel', latEnd);
+latSlider.addEventListener('wheel', e => { if (document.activeElement !== latSlider) return; e.preventDefault(); state.lat = clamp(Math.round((state.lat - e.deltaY * 0.05) * 100) / 100, -90, 90); update(); }, { passive: false });
+latSlider.addEventListener('keydown', e => {
+  const step = e.shiftKey ? 5 : 1; let v = state.lat;
+  if (e.key === 'ArrowUp' || e.key === 'ArrowRight') v += step;
+  else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') v -= step;
+  else if (e.key === 'PageUp') v += 10; else if (e.key === 'PageDown') v -= 10;
+  else if (e.key === 'Home') v = 90; else if (e.key === 'End') v = -90; else return;
+  e.preventDefault(); state.lat = clamp(Math.round(v * 100) / 100, -90, 90); update();
+});
+$('#seoul').addEventListener('click', () => { state.lat = SEOUL; update(); });
+
+/* ambient light: scales the sky fill light and ambient light (100% = original) */
+/* paint the filled part of the thin sliders (also picks up values set from script) */
+function paintRanges(){ document.querySelectorAll('input.thin').forEach(el => { const p = (el.value - el.min) / (el.max - el.min) * 100; const v = p.toFixed(2) + '%'; if (el.style.getPropertyValue('--p') !== v) el.style.setProperty('--p', v); }); }
+document.addEventListener('input', e => { if (e.target.classList && e.target.classList.contains('thin')) paintRanges(); });
+setInterval(paintRanges, 250);
+/* particle density (particles per cubic metre of water in the globe; minimum 1) */
+const PP_DEFAULTS = {knee: 0.82, bloomDay: 0.1, bloomNight: 0.75, radius: 0.45, thrDay: 1.0, thrNight: 0.95, vigDay: 0.18, vigNight: 0.3};
+const pp = Object.assign({}, PP_DEFAULTS);
+function setPP(k, v){ pp[k] = v; const el = $('#pp_' + k); el.value = v; $('#ppv_' + k).textContent = (+v).toFixed(2); el.setAttribute('aria-valuetext', (+v).toFixed(2)); }
+Object.keys(PP_DEFAULTS).forEach(k => {
+  const el = $('#pp_' + k);
+  el.addEventListener('input', () => setPP(k, +el.value));
+  el.addEventListener('pointerdown', () => { controlBusy++; const end = () => { controlBusy = Math.max(0, controlBusy - 1); window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end); }; window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end); });
+});
+$('#ppReset').addEventListener('click', e => { e.preventDefault(); Object.keys(PP_DEFAULTS).forEach(k => setPP(k, PP_DEFAULTS[k])); });
+
+const densIn = $('#density');
+function setDensity(d){
+  state.density = clamp(d, DENS_MIN, DENS_MAX);
+  state.maxCount = Math.round(state.density * INTERIOR_M3);
+  densIn.value = state.density.toFixed(2);
+  $('#densVal').textContent = state.density.toFixed(2) + ' 개/m³';
+  $('#densNote').textContent = `계절 정점 기준 최대 ${state.maxCount.toLocaleString('ko-KR')}개 · 글로브 안 공간 약 ${Math.round(INTERIOR_M3)} m³ (1칸 = 2 m)`;
+  densIn.setAttribute('aria-valuetext', `세제곱미터당 ${state.density.toFixed(2)}개, 최대 ${state.maxCount}개`);
+  update();
+}
+densIn.addEventListener('input', () => setDensity(+densIn.value));
+densIn.addEventListener('pointerdown', () => { controlBusy++; const end = () => { controlBusy = Math.max(0, controlBusy - 1); window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end); }; window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end); });
+$('#densReset').addEventListener('click', () => setDensity(DENS_DEFAULT));
+
+const ambIn = $('#ambient');
+function setAmbient(pct){ state.ambient = clamp(pct, 0, 300) / 100; ambIn.value = Math.round(state.ambient * 100); $('#ambVal').textContent = Math.round(state.ambient * 100) + '%'; ambIn.setAttribute('aria-valuetext', Math.round(state.ambient * 100) + '퍼센트'); update(); }
+ambIn.addEventListener('input', () => setAmbient(+ambIn.value));
+ambIn.addEventListener('pointerdown', () => { controlBusy++; const end = () => { controlBusy = Math.max(0, controlBusy - 1); window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end); }; window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end); });
+$('#ambReset').addEventListener('click', () => setAmbient(100));
+
+/* ---------------- Earth drawing ---------------- */
+const LAND = [
+ [40,68,55,72,70,73,80,74,95,77,110,76,125,73,140,72,160,70,175,67,180,65,178,62,170,60,163,58,162,54,156,51,157,57,150,59,141,59,137,55,141,52,141,48,138,46,135,43,131,42.5,129.5,40,129,37,129.4,35.3,127,34.6,126.3,34.7,126.5,37,126,37.7,125,39.5,124,40,121.5,39,121.5,40.8,118.5,39,117.6,38.5,119,37,122.5,37,119.5,35,121,32,121.9,30.9,121.5,28,119.5,25.5,117,23.5,113,22.2,110,21,108,21.5,106,20,106,18,108.8,15.5,109,11.5,105,8.6,103,10.5,100.5,13.5,99.2,10,100.5,7,103.4,4,104.2,1.4,103.3,1.4,100.3,4.5,98.3,8.5,98.5,13.5,97.5,16.5,94.5,16,94,19,92,21.5,90,22,88,22,86.5,20,84,18,80.2,15.5,80,10.5,77.5,8,76,10,74.5,14,73,18,72.6,21,69,22.5,66.5,25.3,62,25.2,57,25.7,56.3,27.2,52,27.8,50,30,48,30,49,27,51,25,51.5,24,56,24.5,56.5,22.5,59.8,22.4,57,18.9,55,17,52,16,48,14,43.5,12.7,42.7,15.5,41,19,38.5,23,36,27,34.5,28,32.5,30,34,31.5,35.5,36,36,37,30,36.5,27,37,26,40,29,41,32,41.5,37,41,40,41,41.5,41.5,40,44,37.5,45,35,45,33,46,31,46.5,30,49,30,55,33,60],
+ [32,31,34.5,28,36,24,37.5,20,39,16,41.5,13,43.3,12,44.5,10.5,51,11.8,51,10,49,6,46,2,42,-1,40,-3,39.5,-6,39.2,-9,40.5,-11,40.5,-15,37,-18,35.3,-21,35.5,-24,33,-26,32.5,-28.5,30,-31,27,-33.5,22,-34.3,18.5,-34,17,-30,15,-26,12,-18,12,-13,13.5,-10,12,-5,9,-1,9.5,4,5,5.5,0,5,-5,4.5,-8,4.5,-13,8,-17,14,-16.5,19.5,-17,21,-13,27.5,-10,30,-6,35.5,0,36,10,37,11,33.5,15,32,20,31,25,31.8],
+ [44,-25,47,-25,50,-15.5,49.5,-12,47.5,-14,44,-17,43.5,-22],
+ [130,31,131.5,31.5,132,33.5,135,33.5,137,34.5,140,35,141,37.5,142,40,141.5,41.5,140,40.5,140,38.5,139,37.5,137,37,136,35.7,133,35.5,131,34.5,130,33.5],
+ [140,41.6,141.2,41.8,143.3,42,145.5,43.3,144,44.2,141.8,45.4,141.6,43.2,140,43],
+ [120.1,23,121,22,122,25,121.5,25.3],
+ [142,46,143.5,46.5,143,51,143.2,54,142.6,54.3,142,50],
+ [120,18.5,122.2,18.5,122,14,124,12.5,125.5,10,126.4,7,125.5,5.8,123,7,122,7,123,9,121.5,10.5,120.2,14.5],
+ [109,1.5,109.5,-1,110.2,-3,114.5,-4,116.5,-2.5,117.5,0.5,118.8,5,117,7,115.5,5,113,3.2,111,1.8],
+ [95.3,5.6,97.5,5.2,100,2.5,103.5,-0.5,106,-3,106,-5.8,104.5,-5.9,102,-3.5,100.5,-1,98.6,1.8,96.5,3.5],
+ [105.2,-6.8,106.5,-6,108.5,-6.6,111,-6.5,112.5,-6.9,114.5,-7.7,114.5,-8.7,111,-8.2,108,-7.8,106,-7.4],
+ [119.5,-5.5,120.5,-5.5,120.3,-2.8,121.5,-1.9,123,-0.9,124.8,1.3,124,0.9,121,1.3,120,0.7,119.8,-1,119,-3.5],
+ [131,-1.3,134,-0.9,135.5,-3.3,138,-1.8,141,-2.6,145,-4.3,147.5,-6,147.8,-8,150,-10.5,147,-10,144,-7.7,142.5,-9.3,141,-9,139,-8.1,138,-5.5,135,-4.4,132.5,-4,132,-2.8],
+ [114,-22,113.5,-26,115,-30,115,-34,117.5,-35,120,-34,123.5,-33.9,126,-32.3,129,-31.6,131.5,-31.5,134,-32.8,135.6,-34.8,137.7,-35.6,138.5,-34.5,139.7,-36.9,140.6,-38,143.5,-38.8,146.4,-39.1,148.2,-37.8,150,-37.5,151.3,-33.8,153,-31.5,153.6,-28.2,153.1,-25.3,150.8,-22.6,148.8,-20.3,146.3,-19,145.3,-15,143.6,-14,142.5,-10.7,141.6,-12.8,141.5,-16.2,140.6,-17.5,139.3,-17.3,137.7,-16.2,135.9,-15,136.8,-12.2,135.5,-11.9,132.6,-11.5,131,-12.2,129.4,-14.9,127.8,-14.3,125.7,-14.4,124,-16.5,122.2,-17.4,121.2,-19.5,118.8,-20.3,116.7,-20.6],
+ [144.7,-40.7,148.3,-40.9,148,-43.2,146.8,-43.6,145.2,-42.3],
+ [172.7,-34.4,174.5,-36.5,175.9,-37.5,178.5,-37.7,177,-39.3,175,-41.6,174.6,-41.3,173.8,-39.2,174.6,-38.6,174,-36.5],
+ [172.6,-40.5,174.3,-41.7,173,-43.8,171.2,-44.5,169,-46.6,166.5,-46,168,-44,170.6,-42.8],
+ [79.8,8,80.2,6,81.8,7,81.2,8.8,80,9.8],
+ [-168,65.6,-165,68.5,-162,70.3,-156,71.3,-150,70.4,-141,69.7,-125,70,-100,70,-80,65,-60,55,-65,45,-80,30,-97,20,-105,20,-117,32,-125,40,-124,48,-133,55,-140,59.5,-147,61,-152,59,-154,57.5,-158,56.5,-162,55,-164.5,54.5,-161.5,58.5,-165,60.5,-165,62.5,-164.5,63.3]
+];
+(function addAntarctica(){ const a = []; for (let l = 0; l < 360; l += 6) a.push(l, -70 - 3 * Math.sin(l * 3 * D2R)); LAND.push(a); })();
+
+function drawEarth(){
+  const cvs = $('#earth'); const S = cvs.clientWidth; if (!S) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1); const P = Math.round(S * dpr);
+  if (cvs.width !== P){ cvs.width = P; cvs.height = P; }
+  const ctx = cvs.getContext('2d', { willReadFrequently: true });
+  const R = P / 2 - 2 * dpr, cx = P / 2, cy = P / 2;
+  const lat0 = 18 * D2R, lon0 = 127 * D2R;
+  const sl0 = Math.sin(lat0), cl0 = Math.cos(lat0);
+  const proj = (lon, lat) => {
+    const l = lon * D2R - lon0, f = lat * D2R;
+    return [Math.cos(f) * Math.sin(l), cl0 * Math.sin(f) - sl0 * Math.cos(f) * Math.cos(l), sl0 * Math.sin(f) + cl0 * Math.cos(f) * Math.cos(l)];
+  };
+  ctx.clearRect(0, 0, P, P);
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.clip();
+  const og = ctx.createRadialGradient(cx - R * 0.3, cy - R * 0.35, R * 0.1, cx, cy, R);
+  og.addColorStop(0, '#4a8cc0'); og.addColorStop(1, '#1d4a72');
+  ctx.fillStyle = og; ctx.fillRect(0, 0, P, P);
+  ctx.fillStyle = '#88b065';
+  for (const poly of LAND){
+    ctx.beginPath();
+    for (let i = 0; i < poly.length; i += 2){
+      let [x, y, c] = proj(poly[i], poly[i + 1]);
+      if (c < 0){ const L = Math.hypot(x, y) || 1; x /= L; y /= L; }
+      const X = cx + x * R, Y = cy - y * R;
+      i === 0 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+    }
+    ctx.closePath(); ctx.fill();
+  }
+  // graticule
+  ctx.strokeStyle = 'rgba(255,255,255,0.22)'; ctx.lineWidth = 1 * dpr;
+  const drawLine = (pts, dashBack) => {
+    let pen = false; ctx.beginPath();
+    for (const [x, y, c] of pts){ if (c >= 0){ const X = cx + x * R, Y = cy - y * R; pen ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); pen = true; } else pen = false; }
+    ctx.stroke();
+  };
+  for (let la = -60; la <= 60; la += 30){ const pts = []; for (let lo = 0; lo <= 360; lo += 4) pts.push(proj(lo, la)); drawLine(pts); }
+  for (let lo = 0; lo < 360; lo += 30){ const pts = []; for (let la = -90; la <= 90; la += 4) pts.push(proj(lo, la)); drawLine(pts); }
+  // day/night shading from subsolar point
+  if (sun){
+    const dec = sun.dec * D2R, ls = (127 - sun.H) * D2R;
+    const s = [Math.cos(dec) * Math.cos(ls), Math.cos(dec) * Math.sin(ls), Math.sin(dec)];
+    const east = [-Math.sin(lon0), Math.cos(lon0), 0];
+    const north = [-sl0 * Math.cos(lon0), -sl0 * Math.sin(lon0), cl0];
+    const e0 = [cl0 * Math.cos(lon0), cl0 * Math.sin(lon0), sl0];
+    const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+    const sv = [dot(s, east), dot(s, north), dot(s, e0)];
+    const img = ctx.getImageData(0, 0, P, P); const d = img.data;
+    for (let py = 0; py < P; py++){
+      const y = (cy - py) / R;
+      for (let px = 0; px < P; px++){
+        const x = (px - cx) / R; const r2 = x * x + y * y; if (r2 > 1) continue;
+        const z = Math.sqrt(1 - r2);
+        const k = x * sv[0] + y * sv[1] + z * sv[2];
+        const night = smooth(0.06, -0.08, k);
+        const limb = 0.78 + 0.22 * z;
+        const i = (py * P + px) * 4;
+        const f = (1 - 0.66 * night) * limb;
+        d[i] = d[i] * f; d[i + 1] = d[i + 1] * f; d[i + 2] = Math.min(255, d[i + 2] * f + 18 * night);
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  // current latitude parallel
+  const acc = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#d8a956';
+  const pts = []; for (let lo = 0; lo <= 360; lo += 3) pts.push(proj(lo, state.lat));
+  ctx.setLineDash([3 * dpr, 3 * dpr]); ctx.strokeStyle = 'rgba(255,236,190,0.45)'; ctx.lineWidth = 1 * dpr;
+  ctx.beginPath(); let pen = false;
+  for (const [x, y, c] of pts){ if (c < 0){ const X = cx + x * R, Y = cy - y * R; pen ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); pen = true; } else pen = false; }
+  ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = '#ffd877'; ctx.lineWidth = 2.2 * dpr; drawLine(pts);
+  // marker at Korea's meridian
+  const [mx, my, mc] = proj(127, state.lat);
+  const MX = cx + mx * R, MY = cy - my * R;
+  ctx.globalAlpha = mc >= 0 ? 1 : 0.5;
+  ctx.fillStyle = '#ffd877'; ctx.strokeStyle = '#3a2a08'; ctx.lineWidth = 1.5 * dpr;
+  ctx.beginPath(); ctx.arc(MX, MY, 4.2 * dpr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+  ctx.strokeStyle = acc; ctx.lineWidth = 1.5 * dpr;
+  ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+}
+try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => drawEarth()); } catch(_){}
+new ResizeObserver(() => drawEarth()).observe($('#earth'));
+
+/* ---------------- errors ---------------- */
+function showError(title, body, fixes){
+  $('#loading').hidden = true;
+  $('#errTitle').textContent = title;
+  $('#errBody').textContent = body;
+  $('#errFix').innerHTML = fixes.map(f => `<li>${f}</li>`).join('');
+  $('#err').hidden = false;
+}
+$('#errRetry').addEventListener('click', () => location.reload());
+$('#errLite').addEventListener('click', () => { try { localStorage.setItem('globe-lite', '1'); } catch(_){} location.reload(); });
+
+/* ---------------- 3D scene ---------------- */
+let scene3d = null;
+
+function webglOK(){
+  try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl') || c.getContext('experimental-webgl'))); }
+  catch(e){ return false; }
+}
+
+function build3D(){
+  const T = THREE;
+  const stage = $('#stage'), canvas = $('#gl');
+  let lite = false; try { lite = localStorage.getItem('globe-lite') === '1'; } catch(_){}
+  const renderer = new T.WebGLRenderer({ canvas, antialias: !lite, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lite ? 1 : 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = lite ? T.PCFShadowMap : T.PCFSoftShadowMap;
+  const scene = new T.Scene();
+  const camera = new T.PerspectiveCamera(50, 1, 0.1, 400);
+  const UP = new T.Vector3(0, 1, 0);
+
+  const phong = (c, o) => new T.MeshPhongMaterial(Object.assign({ color: c, shininess: 12, specular: 0x1c1c1c }, o || {}));
+  function smoothNormals(geo){
+    geo.computeVertexNormals();
+    const p = geo.attributes.position, n = geo.attributes.normal, m = new Map();
+    for (let i = 0; i < p.count; i++){
+      const k = Math.round(p.getX(i) * 1e4) + '_' + Math.round(p.getY(i) * 1e4) + '_' + Math.round(p.getZ(i) * 1e4);
+      let a = m.get(k); if (!a){ a = []; m.set(k, a); } a.push(i);
+    }
+    m.forEach(a => { if (a.length < 2) return; let x = 0, y = 0, z = 0; for (const i of a){ x += n.getX(i); y += n.getY(i); z += n.getZ(i); } const L = Math.hypot(x, y, z) || 1; for (const i of a) n.setXYZ(i, x / L, y / L, z / L); });
+    n.needsUpdate = true; return geo;
+  }
+  function lumpy(geo, amp, seed, f){
+    const r = mulberry(seed); const a = []; for (let k = 0; k < 6; k++) a.push(r() * 6.283);
+    const p = geo.attributes.position; const v = new T.Vector3();
+    for (let i = 0; i < p.count; i++){
+      v.fromBufferAttribute(p, i); const L = v.length(); if (L < 1e-6) continue;
+      const nx = v.x / L, ny = v.y / L, nz = v.z / L;
+      const n = Math.sin(nx * f + a[0]) * Math.cos(ny * f * 1.1 + a[1]) + 0.6 * Math.sin(nz * f * 1.7 + a[2] + nx * 2.0) + 0.4 * Math.cos((nx + ny - nz) * f * 2.3 + a[3]);
+      v.multiplyScalar(1 + amp * n * 0.5); p.setXYZ(i, v.x, v.y, v.z);
+    }
+    p.needsUpdate = true; return smoothNormals(geo);
+  }
+  const shadowy = (m, cast = true, recv = true) => { m.castShadow = cast; m.receiveShadow = recv; return m; };
+
+  /* --- sky dome --- */
+  const skyU = {
+    uTop: { value: new T.Color() }, uBot: { value: new T.Color() },
+    uSun: { value: new T.Vector3(0, 1, 0) }, uMoon: { value: new T.Vector3(0, 1, 0) },
+    uGlow: { value: new T.Color(1, 0.8, 0.5) }, uSunVis: { value: 1 }, uNight: { value: 0 }, uTime: { value: 0 }
+  };
+  const sky = new T.Mesh(new T.SphereGeometry(150, 48, 32), new T.ShaderMaterial({
+    uniforms: skyU, side: T.BackSide, depthWrite: false, depthTest: false,
+    vertexShader: `varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
+    fragmentShader: `
+      uniform vec3 uTop, uBot, uSun, uMoon, uGlow; uniform float uSunVis, uNight, uTime;
+      varying vec3 vDir;
+      float hash(vec3 p){ p = fract(p*0.3183099 + 0.1); p *= 17.0; return fract(p.x*p.y*p.z*(p.x+p.y+p.z)); }
+      void main(){
+        vec3 d = normalize(vDir);
+        vec3 col = mix(uBot, uTop, smoothstep(-0.55, 0.5, d.y));
+        float sd = max(dot(d, uSun), 0.0);
+        col += uGlow * (pow(sd, 6.0)*0.2 + pow(sd, 48.0)*0.35 + pow(sd, 700.0)*0.7) * uSunVis;
+        float disc = smoothstep(0.99955, 0.99972, dot(d, uSun));
+        col = mix(col, vec3(1.0, 0.97, 0.86), disc * uSunVis);
+        if (uNight > 0.001){
+          vec3 p = d * 150.0; vec3 c = floor(p); float h = hash(c);
+          if (h > 0.972){
+            vec3 o = vec3(hash(c+3.1), hash(c+7.7), hash(c+1.3)) - 0.5;
+            float r = length(fract(p) - 0.5 - o*0.6);
+            float tw = 0.65 + 0.35*sin(uTime*(1.5 + h*3.0) + h*40.0);
+            col += vec3(0.9,0.93,1.0) * smoothstep(0.17, 0.0, r) * tw * uNight * (0.35 + (h-0.972)*23.0);
+          }
+          float md = dot(d, uMoon);
+          col += vec3(0.5,0.58,0.78) * (pow(max(md,0.0), 300.0)*0.35 + pow(max(md,0.0), 20.0)*0.06) * uNight;
+          float moon = smoothstep(0.99935, 0.99952, md);
+          col = mix(col, vec3(0.94, 0.94, 0.87), moon * uNight);
+        }
+        gl_FragColor = vec4(col, 1.0);
+      }`
+  }));
+  sky.renderOrder = -10; sky.frustumCulled = false; scene.add(sky);
+
+  /* --- lights --- */
+  const hemi = new T.HemisphereLight(0xbfd6f0, 0x4a3b2c, 0.5); scene.add(hemi);
+  const amb = new T.AmbientLight(0x3c4250, 0.1); scene.add(amb);
+  const sunL = new T.DirectionalLight(0xfff1dd, 1);
+  sunL.castShadow = true;
+  const SM = lite ? 1024 : 2048; sunL.shadow.mapSize.set(SM, SM);
+  Object.assign(sunL.shadow.camera, { left: -4.6, right: 4.6, top: 4.6, bottom: -4.6, near: 1, far: 32 });
+  sunL.shadow.bias = -0.0002; sunL.shadow.normalBias = 0.004;   // small offsets so shadows start right at the base of each object
+  sunL.target.position.set(0, 1, 0);
+  scene.add(sunL, sunL.target);
+  const moonL = new T.DirectionalLight(0x9fb3dd, 0); moonL.target.position.set(0, 1, 0); scene.add(moonL, moonL.target);
+
+  /* --- groups --- */
+  const AZ = 80; // the cabin door faces this compass bearing
+  const ROT = Math.atan2(Math.sin(AZ * D2R), -Math.cos(AZ * D2R));
+  const rig = new T.Group(); scene.add(rig);
+  const globe = new T.Group(); globe.rotation.y = ROT; rig.add(globe);
+
+  /* --- wooden base with brass rim --- */
+  function woodTexture(){
+    const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
+    g.fillStyle = '#7a4a28'; g.fillRect(0, 0, 512, 256);
+    const r = mulberry(7);
+    for (let i = 0; i < 140; i++){
+      const y = r() * 256, a = 0.05 + r() * 0.12, w = 1 + r() * 3;
+      g.strokeStyle = r() < 0.5 ? `rgba(40,20,8,${a})` : `rgba(190,130,80,${a * 0.8})`; g.lineWidth = w;
+      // periodic waves (whole cycles across the width) so each grain line meets itself where the texture repeats around the base
+      const k1 = 1 + Math.floor(r() * 3), k2 = 4 + Math.floor(r() * 5), p1 = r() * 6.283, p2 = r() * 6.283;
+      const gy = x => y + Math.sin(x / 512 * 6.283 * k1 + p1) * 3 + Math.sin(x / 512 * 6.283 * k2 + p2) * 0.9;
+      g.beginPath(); g.moveTo(0, gy(0));
+      for (let x = 8; x <= 512; x += 8) g.lineTo(x, gy(x));
+      g.stroke();
+    }
+    const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(5, 1); return t;
+  }
+  const baseProfile = [[0,-1.30],[3.15,-1.30],[3.28,-1.24],[3.31,-1.12],[3.23,-1.02],[3.09,-0.96],[3.02,-0.82],[3.0,-0.5],[3.06,-0.38],[3.1,-0.29],[3.03,-0.21],[2.95,-0.19]].map(p => new T.Vector2(p[0], p[1]));
+  const base = shadowy(new T.Mesh(new T.LatheGeometry(baseProfile, 96), phong(0xffffff, { map: woodTexture(), shininess: 45, specular: 0x3a2a1a })));
+  globe.add(base);
+  // closed profile: outer face, top lip, inner wall down to the base and the underside, so the rim is a solid ring from every side
+  const brassProfile = [[2.93,-0.21],[3.03,-0.17],[3.05,-0.06],[3.01,0.04],[2.9,0.1],[2.74,0.1],[2.71,0.05],[2.7,-0.21],[2.93,-0.21]].map(p => new T.Vector2(p[0], p[1]));
+  const brass = shadowy(new T.Mesh(new T.LatheGeometry(brassProfile, 96), phong(0xb0853a, { shininess: 90, specular: 0xffe0a0, side: T.DoubleSide })));
+  globe.add(brass);
+
+  /* --- ground --- */
+  const FLOOR_R = 2.75;
+  const floorGeo = new T.RingGeometry(0.001, FLOOR_R, 96, 14); floorGeo.rotateX(-Math.PI / 2);
+  {
+    const p = floorGeo.attributes.position, col = new Float32Array(p.count * 3); const r = mulberry(11);
+    for (let i = 0; i < p.count; i++){ const x = p.getX(i), z = p.getZ(i); const n = 0.9 + 0.08 * Math.sin(x * 3.1 + z * 1.7) * Math.cos(z * 2.6 - x) + (r() - 0.5) * 0.1; col[i*3] = n; col[i*3+1] = n; col[i*3+2] = n; }
+    floorGeo.setAttribute('color', new T.BufferAttribute(col, 3));
+  }
+  const floorMat = phong(0x8fbf6a, { vertexColors: true, shininess: 4 });
+  const floor = shadowy(new T.Mesh(floorGeo, floorMat), false, true); globe.add(floor);
+
+  // dirt road crossing at the end of the stone path; its ends meet the glass wall
+  const ROAD_Z = 1.6, ROAD_W = 0.5;
+  const roadGeo = new T.PlaneGeometry(2 * FLOOR_R, ROAD_W, 96, 4); roadGeo.rotateX(-Math.PI / 2);
+  {
+    const p = roadGeo.attributes.position, col = new Float32Array(p.count * 3); const r = mulberry(5);
+    for (let i = 0; i < p.count; i++){
+      let x = p.getX(i), z = p.getZ(i);
+      const edge = Math.abs(z) > ROAD_W / 2 - 0.01;
+      if (edge) z += Math.sin(x * 4.3 + (z > 0 ? 1 : 0)) * 0.025;
+      z += ROAD_Z;
+      const lim = Math.sqrt(Math.max(0, (FLOOR_R - 0.005) ** 2 - z * z));
+      x = clamp(x, -lim, lim);
+      p.setXYZ(i, x, 0.006, z);
+      const n = 0.85 + 0.15 * r(); col[i*3] = n; col[i*3+1] = n; col[i*3+2] = n;
+    }
+    roadGeo.setAttribute('color', new T.BufferAttribute(col, 3)); roadGeo.computeVertexNormals();
+  }
+  const road = shadowy(new T.Mesh(roadGeo, phong(0x9a7a55, { vertexColors: true, shininess: 3, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })), false, true);
+  globe.add(road);
+
+  // doorstep + four round stepping stones
+  const stoneGeo = lumpy(new T.SphereGeometry(1, 18, 10), 0.08, 3, 3.0);
+  const stoneMats = [phong(0x8f8b84, { shininess: 18 }), phong(0x9a968e, { shininess: 18 }), phong(0x7f7c77, { shininess: 18 })];
+  const doorstep = shadowy(new T.Mesh(stoneGeo, stoneMats[1])); doorstep.scale.set(0.32, 0.05, 0.15); doorstep.position.set(0, 0.025, -0.15); globe.add(doorstep);
+  [[0.02, 0.18, 0.16], [-0.04, 0.5, 0.15], [0.03, 0.82, 0.155], [-0.02, 1.14, 0.15]].forEach((s, i) => {
+    const m = shadowy(new T.Mesh(stoneGeo, stoneMats[i % 3])); m.scale.set(s[2], 0.04, s[2] * 0.88); m.position.set(s[0], 0.02, s[1]); m.rotation.y = i * 1.3; globe.add(m);
+  });
+
+  // rocks around the rim (whiten in the snowy window)
+  const rockSnow = { value: 0 };
+  const rockMat = phong(0x7b7873, { shininess: 14 });
+  rockMat.onBeforeCompile = sh => {
+    sh.uniforms.uSnow = rockSnow;
+    sh.vertexShader = 'varying vec3 vWN;\n' + sh.vertexShader.replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\n vWN = normalize(mat3(modelMatrix) * objectNormal);');
+    sh.fragmentShader = 'uniform float uSnow;\nvarying vec3 vWN;\n' + sh.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n float sn = uSnow * (0.32 + 0.68 * smoothstep(0.05, 0.55, vWN.y));\n diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.95,0.97,1.0), sn);');
+  };
+  [[2.15, 0.62, 0.3, 1], [1.9, -1.45, 0.24, 2], [-2.25, -0.95, 0.26, 3], [-1.15, 2.22, 0.21, 4], [1.38, 2.14, 0.19, 5], [0.55, -2.3, 0.2, 6], [-1.95, 1.2, 0.15, 7]].forEach(r => {
+    const g = lumpy(new T.SphereGeometry(1, 20, 14), 0.22, r[3] * 17, 2.4);
+    const m = shadowy(new T.Mesh(g, rockMat)); m.scale.set(r[2], r[2] * 0.68, r[2] * 0.9); m.position.set(r[0], r[2] * 0.25, r[1]); m.rotation.y = r[3]; globe.add(m);
+  });
+
+  /* --- log cabin --- */
+  const CZ = -0.95, W2 = 0.85, D2 = 0.6, LOG_R = 0.075, STEP = 0.14, NLOG = 7, FOUND_H = 0.12;
+  const WALL_TOP = FOUND_H + LOG_R + (NLOG - 1) * STEP + STEP / 2 + LOG_R; // ≈1.18
+  const TAN_A = 0.72, A = Math.atan(TAN_A), COS_A = Math.cos(A), SIN_A = Math.sin(A);
+  const PT = 0.035, RUN = D2 + 0.32, ROOF_X = W2 + 0.27;
+  const under = z => WALL_TOP + (D2 + LOG_R - Math.abs(z)) * TAN_A;
+  const ROOF_OFF = 0.065 * (1 + 1 / COS_A); // top of the roof logs above the underside line
+  const SNOW_T = 0.075;
+  const cabin = new T.Group(); cabin.position.set(0, 0, CZ); globe.add(cabin);
+  const logMats = [phong(0x8a5a36, { shininess: 10 }), phong(0x7c5132, { shininess: 10 }), phong(0x956242, { shininess: 10 })];
+  const endMat = phong(0xc99c68, { shininess: 6 });
+  const rLog = mulberry(21);
+  function log(len, axis, x, y, z, r){
+    const rr = (r || LOG_R) * (0.94 + rLog() * 0.1);
+    const g = new T.CylinderGeometry(rr, rr, len, 12, 1);
+    if (axis === 'x') g.rotateZ(Math.PI / 2); else g.rotateX(Math.PI / 2);
+    const m = shadowy(new T.Mesh(g, [logMats[Math.floor(rLog() * 3)], endMat, endMat]));
+    m.position.set(x, y, z); cabin.add(m); return m;
+  }
+  for (let i = 0; i < NLOG; i++){
+    const y = FOUND_H + LOG_R + i * STEP;
+    log(2 * W2 + 0.3, 'x', 0, y, D2); log(2 * W2 + 0.3, 'x', 0, y, -D2);
+    log(2 * D2 + 0.3, 'z', W2, y + STEP / 2, 0); log(2 * D2 + 0.3, 'z', -W2, y + STEP / 2, 0);
+  }
+  // gable ends stacked from logs
+  for (let j = 1; j <= 10; j++){
+    const y = FOUND_H + LOG_R + (NLOG - 1) * STEP + STEP / 2 + j * STEP;
+    const half = (D2 + LOG_R) - (y - LOG_R - WALL_TOP) / TAN_A; // bottom edge of each end meets the roof underside, so the log closes up against the roof
+    if (half < 0.02) break;
+    log(2 * half, 'z', W2, y, 0); log(2 * half, 'z', -W2, y, 0);
+  }
+  // stone foundation
+  {
+    const r = mulberry(31); const g = lumpy(new T.SphereGeometry(1, 12, 8), 0.12, 9, 3);
+    const add = (x, z) => { const m = shadowy(new T.Mesh(g, stoneMats[Math.floor(r() * 3)])); const s = 0.09 + r() * 0.03; m.scale.set(s * 1.2, 0.075, s); m.position.set(x, 0.06, z); m.rotation.y = r() * 3; cabin.add(m); };
+    for (let x = -W2; x <= W2 + 0.01; x += 0.19){ add(x, D2); add(x, -D2); }
+    for (let z = -D2 + 0.19; z < D2; z += 0.19){ add(W2, z); add(-W2, z); }
+    // solid plinth: from just below the floor up to the bottom of the first front/back logs, so the cabin sits on the ground with no gaps
+    const PLINTH_B = -0.02;
+    const core = shadowy(new T.Mesh(new T.BoxGeometry(2 * W2 + 0.12, FOUND_H - PLINTH_B, 2 * D2 + 0.12), stoneMats[2])); core.position.y = (FOUND_H + PLINTH_B) / 2; cabin.add(core);
+    // the side walls start half a log higher; fill that strip with stone down to the floor as well
+    const SILL_TOP = FOUND_H + STEP / 2 + 0.005;
+    for (const sx of [1, -1]){
+      const sill = shadowy(new T.Mesh(new T.BoxGeometry(LOG_R * 1.7, SILL_TOP - PLINTH_B, 2 * D2), stoneMats[2]));
+      sill.position.set(sx * W2, (SILL_TOP + PLINTH_B) / 2, 0); cabin.add(sill);
+    }
+  }
+  // log roof: round logs laid along the ridge, stacked down each slope edge to edge
+  const RR = 0.065;
+  const plankLen = RUN / COS_A + 0.03;
+  const rRoof = mulberry(41);
+  const roofLog = (len, x, y, z, r) => {
+    const rr = r * (0.95 + rRoof() * 0.08);
+    const g = new T.CylinderGeometry(rr, rr, len, 12, 1); g.rotateZ(Math.PI / 2);
+    const m = shadowy(new T.Mesh(g, [logMats[Math.floor(rRoof() * 3)], endMat, endMat]));
+    m.position.set(x, y, z); cabin.add(m); return m;
+  };
+  const roofLogs = [];   // every roof log + its outward direction, so snow can follow each log
+  const NRL = Math.round((2 * ROOF_X - 2 * RR) / (2 * RR * 0.96)) + 1, RSTEP = (2 * ROOF_X - 2 * RR) / (NRL - 1); // evenly spaced, edge to edge on both sides
+  for (const side of [1, -1]){
+    const sMid = plankLen / 2 - 0.03, zl = side * sMid * COS_A;   // middle of the slope, on the underside line
+    for (let k = 0; k < NRL; k++){
+      const x = -ROOF_X + RR + k * RSTEP;
+      const L = plankLen + (rRoof() - 0.5) * 0.04, rr = RR * (0.95 + rRoof() * 0.08);
+      const g = new T.CylinderGeometry(rr, rr, L, 12, 1); g.rotateX(Math.PI / 2);   // log axis along the slope
+      const m = shadowy(new T.Mesh(g, [logMats[Math.floor(rRoof() * 3)], endMat, endMat]));
+      m.position.set(x, under(zl) + RR * COS_A, zl + side * RR * SIN_A); m.rotation.x = side * A; cabin.add(m);
+      roofLogs.push({ m, rr, L, n: new T.Vector3(0, COS_A, side * SIN_A) });
+    }
+  }
+  const RIDGE_OUT = 0.12; // the ridge log sticks out this far past the roof edge on both ends
+  const ridgeLog = roofLog(2 * ROOF_X + 2 * RIDGE_OUT, 0, under(0) + RR * 1.55, 0, RR * 1.05);
+  roofLogs.push({ m: ridgeLog, rr: ridgeLog.geometry.parameters.radiusTop, L: 2 * ROOF_X + 2 * RIDGE_OUT, n: new T.Vector3(0, 1, 0), ridge: true });
+  // top plate logs on the front and back walls close the gap between the last wall log and the roof
+  log(2 * ROOF_X, 'x', 0, FOUND_H + LOG_R + NLOG * STEP, D2); log(2 * ROOF_X, 'x', 0, FOUND_H + LOG_R + NLOG * STEP, -D2);
+  // dark board behind each gable, inside the logs, so no sliver of the interior shows between the gable logs and the roof
+  {
+    const sh = new T.Shape(); const zE = D2 + LOG_R + 0.02;
+    sh.moveTo(-zE, WALL_TOP - 0.1); sh.lineTo(zE, WALL_TOP - 0.1); sh.lineTo(zE, under(zE)); sh.lineTo(0, under(0)); sh.lineTo(-zE, under(zE)); sh.closePath();
+    const gGeo = new T.ShapeGeometry(sh); gGeo.rotateY(Math.PI / 2);
+    for (const sx of [1, -1]){ const m = shadowy(new T.Mesh(gGeo, phong(0x3b281a, { side: T.DoubleSide, shininess: 4 }))); m.position.x = sx * W2; cabin.add(m); }
+  }
+  // roof snow, one pillow per slope
+  const snowMat = phong(0xf4f7fb, { shininess: 25, specular: 0x30343a });
+  // snow follows the logs: each roof log gets its own snow shell, the same round shape pushed out along the roof normal as snow builds up
+  const roofSnow = [];
+  for (const rl of roofLogs){
+    const g = new T.CylinderGeometry(rl.rr * 1.03, rl.rr * 1.03, rl.L + 0.01, 14, 1, false); // closed cylinder: end caps hide the inside
+    if (rl.ridge) g.rotateZ(Math.PI / 2); else g.rotateX(Math.PI / 2);
+    const m = shadowy(new T.Mesh(g, snowMat)); m.rotation.copy(rl.m.rotation);
+    m.userData.base = rl.m.position.clone(); m.userData.n = rl.n;
+    m.position.copy(m.userData.base); m.visible = false; cabin.add(m); roofSnow.push(m);
+  }
+  // stone chimney on the right gable
+  const CH = { x0: W2 + 0.09, x1: W2 + 0.35, z0: -0.4, z1: -0.12, top: under(0) + 0.38 };
+  {
+    const core = shadowy(new T.Mesh(new T.BoxGeometry(CH.x1 - CH.x0, CH.top, CH.z1 - CH.z0), phong(0x7d7871, { shininess: 10 })));
+    core.position.set((CH.x0 + CH.x1) / 2, CH.top / 2, (CH.z0 + CH.z1) / 2); cabin.add(core);
+    const r = mulberry(61); const g = lumpy(new T.SphereGeometry(1, 10, 7), 0.15, 13, 3);
+    for (let y = 0.08; y < CH.top; y += 0.11){
+      for (let k = 0; k < 6; k++){
+        const m = shadowy(new T.Mesh(g, stoneMats[Math.floor(r() * 3)])); const s = 0.05 + r() * 0.02;
+        const face = k % 3; let x, z;
+        if (face === 0){ x = CH.x1; z = lerp(CH.z0, CH.z1, r()); } else if (face === 1){ x = lerp(CH.x0, CH.x1, r()); z = CH.z1; } else { x = lerp(CH.x0, CH.x1, r()); z = CH.z0; }
+        m.scale.set(s * 1.3, s * 0.8, s); m.position.set(x, y + (r() - 0.5) * 0.03, z); cabin.add(m);
+      }
+    }
+    const cap = shadowy(new T.Mesh(new T.BoxGeometry(CH.x1 - CH.x0 + 0.08, 0.05, CH.z1 - CH.z0 + 0.08), stoneMats[2])); cap.position.set((CH.x0 + CH.x1) / 2, CH.top + 0.02, (CH.z0 + CH.z1) / 2); cabin.add(cap);
+  }
+  // woodpile against the left wall
+  {
+    const r = mulberry(71);
+    for (let row = 0; row < 4; row++){
+      for (let k = 0; k < 8 - (row === 3 ? 2 : 0); k++){
+        const rr = 0.045 + r() * 0.012;
+        const g = new T.CylinderGeometry(rr, rr, 0.34, 9); g.rotateZ(Math.PI / 2);
+        const m = shadowy(new T.Mesh(g, [logMats[Math.floor(r() * 3)], endMat, endMat]));
+        let py = 0.05 + row * 0.088, pz = -0.42 + k * 0.1 + (row % 2) * 0.05 + (row === 3 ? 0.1 : 0);
+        if (row === 2 && k === 0){ py = 0.05; pz = -0.42 + 8 * 0.1; }   // the log that overhung the left end now fills the bottom-right gap
+        m.position.set(-W2 - 0.29 + (r() - 0.5) * 0.03, py, pz); cabin.add(m);
+      }
+    }
+  }
+  // door, white window frames, glowing panes
+  const FRONT = D2 + LOG_R;
+  const trimMat = phong(0xf3f1ea, { shininess: 30 });
+  const doorMat = phong(0x5a3a24, { shininess: 14 });
+  {
+    const door = shadowy(new T.Mesh(new T.BoxGeometry(0.36, 0.64, 0.04), doorMat)); door.position.set(0, FOUND_H + 0.33, FRONT - 0.005); cabin.add(door);
+    for (const x of [-0.11, 0, 0.11]){ const b = shadowy(new T.Mesh(new T.BoxGeometry(0.012, 0.6, 0.012), phong(0x40291a))); b.position.set(x + 0.055, FOUND_H + 0.33, FRONT + 0.018); cabin.add(b); }
+    const fr = phong(0x4a301e, { shininess: 10 });
+    [[-0.2, 0.36, 0.04, 0.72], [0.2, 0.36, 0.04, 0.72]].forEach(a => { const m = shadowy(new T.Mesh(new T.BoxGeometry(a[2], a[3], 0.06), fr)); m.position.set(a[0], FOUND_H + a[1], FRONT); cabin.add(m); });
+    const lintel = shadowy(new T.Mesh(new T.BoxGeometry(0.46, 0.05, 0.07), fr)); lintel.position.set(0, FOUND_H + 0.69, FRONT); cabin.add(lintel);
+    const knobM = new T.Mesh(new T.SphereGeometry(0.018, 10, 8), phong(0xc69a45, { shininess: 80, specular: 0xffe0a0 })); knobM.position.set(0.12, FOUND_H + 0.32, FRONT + 0.03); cabin.add(knobM);
+  }
+  const paneMat = phong(0x1c2733, { shininess: 90, specular: 0x8899aa, emissive: 0x000000 });
+  const windows = [];
+  function addWindow(x, y, z, rotY){
+    const g = new T.Group(); g.position.set(x, y, z); g.rotation.y = rotY; cabin.add(g);
+    const S = 0.3, t = 0.035;
+    const pane = new T.Mesh(new T.PlaneGeometry(S, S), paneMat); pane.position.z = 0.012; g.add(pane);
+    const bars = [[0, S / 2, S + t, t], [0, -S / 2, S + t, t], [S / 2, 0, t, S], [-S / 2, 0, t, S], [0, 0, 0.018, S], [0, 0, S, 0.018]];
+    for (const b of bars){ const m = shadowy(new T.Mesh(new T.BoxGeometry(b[2], b[3], 0.035), trimMat)); m.position.set(b[0], b[1], 0.03); g.add(m); }
+    const sill = shadowy(new T.Mesh(new T.BoxGeometry(S + 0.1, 0.03, 0.08), trimMat)); sill.position.set(0, -S / 2 - 0.03, 0.05); g.add(sill);
+    windows.push(g); return g;
+  }
+  addWindow(-0.52, FOUND_H + 0.55, FRONT, 0);
+  addWindow(0.52, FOUND_H + 0.55, FRONT, 0);
+  addWindow(W2 + LOG_R, FOUND_H + 0.55, 0.26, Math.PI / 2);
+  addWindow(-W2 - LOG_R, FOUND_H + 0.62, -0.32 + 0.02, -Math.PI / 2).visible = false; // hidden by woodpile side; keeps symmetry for light
+
+  /* --- street lamp --- */
+  const LAMP = { x: 0.4, z: 1.14, y: 1.12 };
+  const iron = phong(0x26282c, { shininess: 50, specular: 0x555555 });
+  {
+    const post = shadowy(new T.Mesh(new T.CylinderGeometry(0.026, 0.034, 1.0, 10), iron)); post.position.set(LAMP.x, 0.5, LAMP.z); globe.add(post); // casts shadows; the lamp's own shadow camera starts below most of it (near 0.9), so it does not black out its own light
+    const foot = shadowy(new T.Mesh(new T.CylinderGeometry(0.06, 0.075, 0.09, 12), iron)); foot.position.set(LAMP.x, 0.045, LAMP.z); globe.add(foot);
+    const collar = shadowy(new T.Mesh(new T.CylinderGeometry(0.05, 0.035, 0.05, 10), iron)); collar.position.set(LAMP.x, 1.01, LAMP.z); globe.add(collar);
+    const cap = new T.Mesh(new T.ConeGeometry(0.13, 0.11, 4), iron); cap.rotation.y = Math.PI / 4; cap.position.set(LAMP.x, 1.27, LAMP.z); cap.castShadow = true; globe.add(cap);
+    const fin = new T.Mesh(new T.SphereGeometry(0.02, 8, 6), iron); fin.position.set(LAMP.x, 1.335, LAMP.z); fin.castShadow = true; globe.add(fin);
+    for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]){ const b = new T.Mesh(new T.BoxGeometry(0.012, 0.2, 0.012), iron); b.position.set(LAMP.x + dx * 0.07, 1.13, LAMP.z + dz * 0.07); b.castShadow = true; globe.add(b); }
+  }
+  const lampGlass = new T.Mesh(new T.BoxGeometry(0.13, 0.18, 0.13), new T.MeshPhongMaterial({ color: 0xdfe8f0, transparent: true, opacity: 0.28, shininess: 100, emissive: 0x000000, depthWrite: false }));
+  lampGlass.position.set(LAMP.x, 1.13, LAMP.z); globe.add(lampGlass);
+  // glass frame under the lamp: an iron rim around a bottom glass pane (its iron casts sun/window shadows; the lamp's own shadow map starts 0.9 below the bulb, so it skips the lantern)
+  const lampBase = new T.Group(); lampBase.position.set(LAMP.x, 1.035, LAMP.z); globe.add(lampBase);
+  for (const [w, d, x, z] of [[0.154, 0.014, 0, 0.07], [0.154, 0.014, 0, -0.07], [0.014, 0.154, 0.07, 0], [0.014, 0.154, -0.07, 0]]){
+    const r = new T.Mesh(new T.BoxGeometry(w, 0.014, d), iron); r.position.set(x, 0, z); r.castShadow = true; lampBase.add(r);
+  }
+  for (const [w, d] of [[0.012, 0.128], [0.128, 0.012]]){ const c = new T.Mesh(new T.BoxGeometry(w, 0.008, d), iron); c.castShadow = true; lampBase.add(c); }
+  const lampPane = new T.Mesh(new T.BoxGeometry(0.128, 0.005, 0.128), lampGlass.material); lampPane.position.y = 0.004; lampPane.castShadow = false; lampBase.add(lampPane);
+  const bulbMat = new T.MeshPhongMaterial({ color: 0x9a9080, emissive: 0x000000, shininess: 60 });
+  const bulb = new T.Mesh(new T.SphereGeometry(0.035, 14, 10), bulbMat); bulb.position.set(LAMP.x, LAMP.y, LAMP.z); globe.add(bulb);
+
+  const SPM = lite ? 256 : 512;
+  const lampLight = new T.SpotLight(0xffc477, 0, 4.8, 1.25, 0.65, 1.4);
+  lampLight.position.set(LAMP.x, LAMP.y - 0.04, LAMP.z); lampLight.castShadow = true;
+  lampLight.shadow.mapSize.set(SPM, SPM); lampLight.shadow.camera.near = 0.9; lampLight.shadow.camera.far = 5; lampLight.shadow.bias = -0.002;
+  lampLight.target.position.set(LAMP.x - 0.05, 0, LAMP.z - 0.05);
+  globe.add(lampLight, lampLight.target);
+  const winLight = new T.SpotLight(0xffbb66, 0, 3.6, 1.05, 0.85, 1.4);
+  winLight.position.set(-0.3, FOUND_H + 0.58, CZ + FRONT + 0.1); winLight.castShadow = true;
+  winLight.shadow.mapSize.set(SPM, SPM); winLight.shadow.camera.near = 0.05; winLight.shadow.camera.far = 4; winLight.shadow.bias = -0.002;
+  winLight.target.position.set(-0.1, 0, 1.3);
+  globe.add(winLight, winLight.target);
+
+  // glow sprites
+  function glowTex(){
+    const c = document.createElement('canvas'); c.width = c.height = 128; const g = c.getContext('2d');
+    const gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, 'rgba(255,240,205,1)'); gr.addColorStop(0.18, 'rgba(255,200,120,0.75)'); gr.addColorStop(0.5, 'rgba(255,170,80,0.18)'); gr.addColorStop(1, 'rgba(255,150,60,0)');
+    g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new T.CanvasTexture(c);
+  }
+  const gtex = glowTex();
+  const glows = [];
+  function addGlow(x, y, z, s, parent){ const m = new T.Sprite(new T.SpriteMaterial({ map: gtex, blending: T.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0 })); m.position.set(x, y, z); m.scale.set(s, s, s); m.renderOrder = 4; (parent || globe).add(m); glows.push({ m, base: s }); return m; }
+  addGlow(LAMP.x, LAMP.y, LAMP.z, 1.1);
+  addGlow(-0.52, FOUND_H + 0.55, FRONT + 0.06, 0.55, cabin);
+  addGlow(0.52, FOUND_H + 0.55, FRONT + 0.06, 0.55, cabin);
+  addGlow(W2 + LOG_R + 0.06, FOUND_H + 0.55, 0.26, 0.55, cabin);
+
+  /* --- seasonal tree --- */
+  const TREE = { x: -1.75, z: 0.45 };
+  const tree = new T.Group(); tree.position.set(TREE.x, 0, TREE.z); globe.add(tree);
+  const barkMat = phong(0x5a4031, { shininess: 6 });
+  {
+    const r = mulberry(91);
+    const limb = (p0, dir, len, r0, r1) => {
+      const g = new T.CylinderGeometry(r1, r0, len, 8, 1); g.translate(0, len / 2, 0);
+      const m = shadowy(new T.Mesh(g, barkMat)); m.position.copy(p0); m.quaternion.setFromUnitVectors(UP, dir); tree.add(m);
+      const j = shadowy(new T.Mesh(new T.SphereGeometry(r0, 8, 6), barkMat)); j.position.copy(p0); tree.add(j);
+      return p0.clone().addScaledVector(dir, len);
+    };
+    const grow = (p, dir, len, rad, depth) => {
+      const end = limb(p, dir, len, rad, rad * 0.68);
+      if (depth === 0) return;
+      const n = depth === 3 ? 4 : 3;
+      const perp = new T.Vector3().crossVectors(dir, Math.abs(dir.y) > 0.9 ? new T.Vector3(1, 0, 0) : UP).normalize();
+      for (let i = 0; i < n; i++){
+        const az = (i / n) * Math.PI * 2 + r() * 0.8;
+        const axis = perp.clone().applyAxisAngle(dir, az);
+        const nd = dir.clone().applyAxisAngle(axis, (0.45 + r() * 0.35) * (depth === 3 ? 1.05 : 0.9));
+        nd.y += 0.22; nd.normalize();
+        grow(end, nd, len * (0.62 + r() * 0.12), rad * 0.66, depth - 1);
+      }
+    };
+    grow(new T.Vector3(0, 0, 0), new T.Vector3(0.04, 1, 0.02).normalize(), 0.95, 0.11, 3);
+    const flare = shadowy(new T.Mesh(new T.CylinderGeometry(0.1, 0.17, 0.14, 10), barkMat)); flare.position.y = 0.07; tree.add(flare);
+  }
+  // crown shapes per season peak: cherry (spring), oak (summer), maple (autumn), bare (winter)
+  const CROWN = [
+    { c: [0, 1.95, 0], r: [0.8, 0.36, 0.78], s: 0.36, main: 0xf2b2c6, alt: 0xfbe0ea },
+    { c: [0, 2.0, 0], r: [0.62, 0.5, 0.62], s: 0.46, main: 0x4c8a39, alt: 0x6aa34b },
+    { c: [0, 2.08, 0], r: [0.5, 0.58, 0.5], s: 0.38, main: 0xd04a26, alt: 0xe99630 },
+    { c: [0, 2.0, 0], r: [0.45, 0.45, 0.45], s: 0.0, main: 0x6b4f37, alt: 0x7a5d40 }
+  ];
+  const NB = 12, blobs = [];
+  {
+    const blobGeo = lumpy(new T.SphereGeometry(1, 24, 16), 0.16, 99, 3.2);
+    const r = mulberry(101);
+    for (let i = 0; i < NB; i++){
+      let d;
+      if (i === 0) d = new T.Vector3(0, 1, 0);
+      else { const k = i - 1, n = NB - 1; const y = 0.75 - (k / (n - 1)) * 1.35; const rad = Math.sqrt(Math.max(0, 1 - y * y)); const th = k * 2.39996; d = new T.Vector3(Math.cos(th) * rad, y, Math.sin(th) * rad); }
+      const mat = phong(0xffffff, { shininess: 6 });
+      const m = shadowy(new T.Mesh(blobGeo, mat)); m.rotation.set(r() * 6, r() * 6, r() * 6); tree.add(m);
+      blobs.push({ m, d, k: 0.82 + r() * 0.36, w: r() });
+    }
+  }
+  const FLOOR_TINT = [0x93c26c, 0x5f9b46, 0xa69a57, 0x9ea59a];
+  function updateSeasonLooks(s){
+    const k = Math.floor(s / 90) % 4, n = (k + 1) % 4;
+    const t = smooth(0, 1, (s - k * 90) / 90);
+    const A0 = CROWN[k], B0 = CROWN[n];
+    const c = [0, 1, 2].map(i => lerp(A0.c[i], B0.c[i], t));
+    const rr = [0, 1, 2].map(i => lerp(A0.r[i], B0.r[i], t));
+    const sc = lerp(A0.s, B0.s, t);
+    for (const b of blobs){
+      const s2 = sc * b.k;
+      b.m.visible = s2 > 0.012;
+      b.m.position.set(c[0] + b.d.x * rr[0] * 0.72, c[1] + b.d.y * rr[1] * 0.72, c[2] + b.d.z * rr[2] * 0.72);
+      b.m.scale.set(s2, s2 * (0.85 + 0.15 * (rr[1] / rr[0])), s2);
+      const ca = lerpRGB(hexRGB(A0.main), hexRGB(A0.alt), b.w), cb = lerpRGB(hexRGB(B0.main), hexRGB(B0.alt), b.w);
+      const cc = lerpRGB(ca, cb, t); b.m.material.color.setRGB(cc[0], cc[1], cc[2]); b.m.material.emissive.setRGB(cc[0] * 0.14, cc[1] * 0.14, cc[2] * 0.14);
+    }
+    const fc = lerpRGB(hexRGB(FLOOR_TINT[k]), hexRGB(FLOOR_TINT[n]), t);
+    floorMat.color.setRGB(fc[0], fc[1], fc[2]);
+  }
+
+  /* --- glass dome --- */
+  const GC = 1.2, GR = 3.0, GIN = 2.9;
+  const glassU = { uTop: { value: new T.Color() }, uBot: { value: new T.Color() }, uSunV: { value: new T.Vector3(0, 1, 0) }, uDay: { value: 1 }, uSunUp: { value: 1 }, uK: { value: 1 } };
+  const glassVS = `varying vec3 vN; varying vec3 vV; varying float vY; varying vec3 vWN;
+    void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vV = -mv.xyz; vN = normalize(normalMatrix * normal); vY = position.y; vWN = normalize(mat3(modelMatrix) * normal); gl_Position = projectionMatrix * mv; }`;
+  const glassFS = `uniform vec3 uTop, uBot, uSunV; uniform float uDay, uSunUp, uK;
+    varying vec3 vN; varying vec3 vV; varying float vY; varying vec3 vWN;
+    void main(){
+      if (vY < ${(-GC + 0.03).toFixed(3)}) discard;
+      vec3 N = normalize(vN); vec3 V = normalize(vV); vec3 WN = normalize(vWN);
+      if (!gl_FrontFacing){ N = -N; WN = -WN; }
+      float ndv = clamp(dot(N, V), 0.0, 1.0);
+      float fres = pow(1.0 - ndv, 4.0);
+      vec3 env = mix(uBot, uTop, smoothstep(-0.3, 0.8, WN.y));
+      float lit = 0.4 + 0.6 * uDay;
+      vec3 L1 = normalize(vec3(-0.5, 0.62, 0.6));
+      vec3 L2 = normalize(vec3(0.6, 0.2, 0.75));
+      float sp = pow(max(dot(N, normalize(L1 + V)), 0.0), 220.0) * 0.9 + pow(max(dot(N, normalize(L2 + V)), 0.0), 420.0) * 0.5;
+      sp += pow(max(dot(N, normalize(uSunV + V)), 0.0), 320.0) * uDay * 1.2;
+      vec3 rgb = (env * 0.85 + 0.05) * fres * (0.55 + 0.45 * lit) + vec3(1.0, 0.98, 0.94) * sp * lit * uSunUp; // no glints from the sun or studio light once the sun is below the horizon
+      float a = (0.02 + fres * 0.16) * uK;
+      gl_FragColor = vec4(rgb * uK, a);
+    }`;
+  function glassMat(side, k){
+    const u = Object.assign({}, glassU, { uK: { value: k } });
+    return new T.ShaderMaterial({ uniforms: u, vertexShader: glassVS, fragmentShader: glassFS, side, transparent: true, depthWrite: false,
+      blending: T.CustomBlending, blendSrc: T.OneFactor, blendDst: T.OneMinusSrcAlphaFactor });
+  }
+  const glassGeo = new T.SphereGeometry(GR, 72, 54);
+  const glassBack = new T.Mesh(glassGeo, glassMat(T.BackSide, 0.45)); glassBack.position.y = GC; glassBack.renderOrder = 3; globe.add(glassBack);
+  const glassFront = new T.Mesh(glassGeo, glassMat(T.FrontSide, 1.0)); glassFront.position.y = GC; glassFront.renderOrder = 6; globe.add(glassFront);
+
+  /* --- particles --- */
+  const N = Math.ceil(DENS_MAX * INTERIOR_M3);   // instance pool per particle type, sized for the densest setting
+  function petalGeo(){ const s = new T.Shape(); s.moveTo(0, -0.036); s.bezierCurveTo(0.032, -0.024, 0.034, 0.02, 0.011, 0.036); s.lineTo(0, 0.027); s.lineTo(-0.011, 0.036); s.bezierCurveTo(-0.034, 0.02, -0.032, -0.024, 0, -0.036); return new T.ShapeGeometry(s, 6); }
+  function mapleGeo(){
+    const s = new T.Shape(); const pts = [];
+    const lobes = [[90, 0.044], [162, 0.036], [18, 0.036], [215, 0.024], [-35, 0.024]];
+    for (let i = 0; i < 10; i++){ const a = 90 + i * 36; const r = i % 2 === 0 ? 0.042 * (i === 0 ? 1.05 : (i === 4 || i === 6 ? 0.6 : 0.9)) : 0.016; pts.push([Math.cos(a * D2R) * r, Math.sin(a * D2R) * r]); }
+    s.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) s.lineTo(pts[i][0], pts[i][1]); s.closePath();
+    void lobes; return new T.ShapeGeometry(s);
+  }
+  const leafGeo = new T.CircleGeometry(0.028, 12); leafGeo.scale(1, 1.3, 1);
+  const TYPES = [
+    { geo: petalGeo(), flat: true, vt: 0.2, resp: 2.4, size: 0.022, colors: [0xf7c4d4, 0xf2a9c1, 0xfbe3ec, 0xf5b6cb] },
+    { geo: leafGeo, flat: true, vt: 0.24, resp: 2.7, size: 0.022, colors: [0x8fd165, 0x7cc456, 0xa9de7b, 0x6cb84a] },
+    { geo: mapleGeo(), flat: true, vt: 0.22, resp: 2.5, size: 0.024, colors: [0xd6402a, 0xe8702c, 0xf0a331, 0xb93224, 0xe25a2a] },
+    { geo: new T.SphereGeometry(0.026, 8, 6), flat: false, vt: 0.3, resp: 3.2, size: 0.026, colors: [0xffffff, 0xf3f7ff, 0xeef4ff] }
+  ];
+  const _p = new T.Vector3(), _q = new T.Quaternion(), _e = new T.Euler(), _s = new T.Vector3(), _m = new T.Matrix4();
+  const ZERO = new T.Matrix4().makeScale(0, 0, 0);
+  const rnd = mulberry(123);
+  TYPES.forEach((tp, ti) => {
+    const mat = new T.MeshPhongMaterial({ color: 0xffffff, side: tp.flat ? T.DoubleSide : T.FrontSide, shininess: tp.flat ? 18 : 30, specular: 0x222222, emissive: ti === 3 ? 0x1a1e26 : 0x1a1a1a });
+    const mesh = new T.InstancedMesh(tp.geo, mat, N);
+    mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);
+    mesh.frustumCulled = false; mesh.castShadow = false; mesh.receiveShadow = true;
+    const col = new T.Color();
+    for (let i = 0; i < N; i++){ col.setHex(tp.colors[Math.floor(rnd() * tp.colors.length)]); mesh.setColorAt(i, col); mesh.setMatrixAt(i, ZERO); }
+    mesh.instanceColor.needsUpdate = true;
+    globe.add(mesh);
+    Object.assign(tp, {
+      mesh, P: new Float32Array(N * 3), V: new Float32Array(N * 3), AX: new Float32Array(N), AZ: new Float32Array(N),
+      SPX: new Float32Array(N), SPZ: new Float32Array(N), PH: new Float32Array(N), SZ: new Float32Array(N), SC: new Float32Array(N),
+      ST: new Uint8Array(N), TILT: new Float32Array(N), DIRTY: new Uint8Array(N), count: 0
+    });
+    for (let i = 0; i < N; i++){ tp.PH[i] = rnd(); tp.SZ[i] = 0.75 + rnd() * 0.55; tp.SPX[i] = (rnd() - 0.5) * 4; tp.SPZ[i] = (rnd() - 0.5) * 3; tp.AZ[i] = rnd() * 6.283; }
+  });
+
+  let flowE = 0, snowAmt = 0, lightsOn = 0, wobT = 9;
+  const SETTLE_E = 0.3;
+  const BODY_X = W2 + 0.1, BODY_Z = D2 + 0.1, ROOF_Z = RUN;
+  const roofTop = lz => under(lz) + ROOF_OFF + snowAmt * SNOW_T * 0.85 / COS_A;
+  const inRoof = (x, z) => Math.abs(x) < ROOF_X && Math.abs(z - CZ) < ROOF_Z;
+
+  function restPos(tp, i){
+    for (let tries = 0; tries < 30; tries++){
+      const rr = 2.6 * Math.sqrt(rnd()), th = rnd() * 6.283;
+      const x = rr * Math.cos(th), z = rr * Math.sin(th);
+      const lz = z - CZ;
+      if (x > CH.x0 - 0.02 && x < CH.x1 + 0.02 && lz > CH.z0 - 0.02 && lz < CH.z1 + 0.02) continue;
+      if (inRoof(x, z)){
+        tp.P[i*3] = x; tp.P[i*3+2] = z; tp.P[i*3+1] = roofTop(lz) + 0.004 + rnd() * 0.004;
+        tp.TILT[i] = lz > 0 ? A : -A; return;
+      }
+      tp.P[i*3] = x; tp.P[i*3+2] = z;
+      tp.P[i*3+1] = tp.flat ? 0.004 + rnd() * 0.006 : tp.size * tp.SZ[i] * 0.75;
+      tp.TILT[i] = 0; return;
+    }
+    tp.P[i*3] = 0; tp.P[i*3+1] = 0.005; tp.P[i*3+2] = 2.2; tp.TILT[i] = 0;
+  }
+  function airPos(tp, i){
+    for (let tries = 0; tries < 40; tries++){
+      const u = rnd(), v = rnd(), w = rnd();
+      const rr = 2.6 * Math.cbrt(u), th = v * 6.283, ph = Math.acos(2 * w - 1);
+      const x = rr * Math.sin(ph) * Math.cos(th), y = GC + rr * Math.cos(ph), z = rr * Math.sin(ph) * Math.sin(th);
+      if (y < 0.1) continue;
+      if (Math.abs(x) < ROOF_X && Math.abs(z - CZ) < ROOF_Z && y < roofTop(z - CZ) + 0.05) continue;
+      tp.P[i*3] = x; tp.P[i*3+1] = y; tp.P[i*3+2] = z; return;
+    }
+    tp.P[i*3] = 0; tp.P[i*3+1] = 2.8; tp.P[i*3+2] = 1;
+  }
+  function spawn(tp, i, instant){
+    tp.SC[i] = instant ? 1 : 0; tp.DIRTY[i] = 1; tp.AX[i] = 0; tp.AZ[i] = rnd() * 6.283;
+    tp.V[i*3] = tp.V[i*3+1] = tp.V[i*3+2] = 0;
+    if (flowE > 0.35 && !instant){ tp.ST[i] = 1; airPos(tp, i); tp.TILT[i] = 0; }
+    else { tp.ST[i] = 2; restPos(tp, i); }
+  }
+
+  function shake(){
+    flowE = Math.min(1.9, flowE + 1.4);   // stronger stir per shake
+    wobT = 0;
+    for (const tp of TYPES){
+      for (let i = 0; i < N; i++){
+        if (tp.ST[i] === 0) continue;
+        if (tp.ST[i] === 2){ tp.ST[i] = 1; tp.V[i*3] = (rnd() - 0.5) * 2.2; tp.V[i*3+1] = 1.0 + rnd() * 2.6; tp.V[i*3+2] = (rnd() - 0.5) * 2.2; }
+        else { tp.V[i*3] += (rnd() - 0.5) * 1.8; tp.V[i*3+1] += rnd() * 1.6; tp.V[i*3+2] += (rnd() - 0.5) * 1.8; }
+      }
+    }
+  }
+
+  function stepParticle(tp, i, dt, t){
+    const o = i * 3; const P = tp.P, V = tp.V;
+    let px = P[o], py = P[o+1], pz = P[o+2], vx = V[o], vy = V[o+1], vz = V[o+2];
+    const E = flowE, sz = tp.size * tp.SZ[i], ph = tp.PH[i];
+    let fx = 0, fy = 0, fz = 0;
+    if (E > 0.002){
+      // Hill's spherical vortex: rises in the middle, runs down along the glass, plus a gentle swirl
+      const zc = py - GC, a2 = GIN * GIN, r2 = px * px + pz * pz, k = 1.6 * E;
+      fy = k * (2 - 4 * r2 / a2 - 2 * zc * zc / a2);
+      const ur = 2 * k * zc / a2; fx = ur * px; fz = ur * pz;
+      const sw = 0.85 * k / GIN; fx += -pz * sw; fz += px * sw;
+      fx += E * 0.9 * Math.sin(t * 1.7 + ph * 37 + py * 2.3);
+      fy += E * 0.7 * Math.sin(t * 2.1 + ph * 23 + px * 2.9);
+      fz += E * 0.9 * Math.cos(t * 1.3 + ph * 29 + pz * 2.1);
+    }
+    let tx = fx, ty = fy - tp.vt, tz = fz;
+    if (tp.flat){ tx += Math.sin(t * 2.6 + ph * 60) * 0.24; tz += Math.cos(t * 2.1 + ph * 40) * 0.24; ty += Math.sin(t * 5.2 + ph * 50) * 0.06; }
+    else { tx += Math.sin(t * 1.3 + ph * 50) * 0.05; tz += Math.cos(t * 1.1 + ph * 30) * 0.05; }
+    const kk = Math.min(1, dt * tp.resp);
+    vx += (tx - vx) * kk; vy += (ty - vy) * kk; vz += (tz - vz) * kk;
+    const prevY = py;
+    px += vx * dt; py += vy * dt; pz += vz * dt;
+    tp.AX[i] += tp.SPX[i] * dt * (0.25 + 2.5 * E); tp.AZ[i] += tp.SPZ[i] * dt * (0.4 + 2.0 * E);
+    let settle = false;
+    // floor
+    const fy0 = tp.flat ? 0.004 + ph * 0.006 : sz * 0.75;
+    if (py < fy0){ py = fy0; if (vy < 0) vy = -vy * 0.15; if (E < SETTLE_E){ settle = true; tp.TILT[i] = 0; } }
+    // glass wall
+    { const dx = px, dy = py - GC, dz = pz, d2 = dx*dx + dy*dy + dz*dz, lim = GIN - sz;
+      if (d2 > lim * lim){ const d = Math.sqrt(d2), s = lim / d; px = dx * s; py = GC + dy * s; pz = dz * s; const nx = dx / d, ny = dy / d, nz = dz / d; const vn = vx*nx + vy*ny + vz*nz; if (vn > 0){ vx -= nx * vn; vy -= ny * vn; vz -= nz * vn; } } }
+    // cabin: roof, walls, chimney
+    const lz = pz - CZ;
+    if (!settle && Math.abs(px) < ROOF_X && Math.abs(lz) < ROOF_Z){
+      const top = roofTop(lz);
+      if (py < top){
+        if (prevY >= top - 0.05){
+          py = top + 0.003; if (vy < 0) vy = 0;
+          if (E < SETTLE_E){ settle = true; tp.TILT[i] = lz > 0 ? A : -A; }
+        } else if (Math.abs(px) < BODY_X && Math.abs(lz) < BODY_Z){
+          const ex = BODY_X - Math.abs(px), ez = BODY_Z - Math.abs(lz);
+          if (ex < ez){ px = (px >= 0 ? 1 : -1) * (BODY_X + 0.002); vx = 0; } else { pz = CZ + (lz >= 0 ? 1 : -1) * (BODY_Z + 0.002); vz = 0; }
+        } else if (py > top - 0.08){ py = top - 0.08; if (vy > 0) vy = 0; }
+      }
+    }
+    { const cz2 = pz - CZ;
+      if (px > CH.x0 && px < CH.x1 && cz2 > CH.z0 && cz2 < CH.z1 && py < CH.top + 0.03){
+        const d = [px - CH.x0, CH.x1 - px, cz2 - CH.z0, CH.z1 - cz2]; const m = Math.min(...d);
+        if (m === d[0]){ px = CH.x0 - 0.002; vx = Math.min(vx, 0); } else if (m === d[1]){ px = CH.x1 + 0.002; vx = Math.max(vx, 0); }
+        else if (m === d[2]){ pz = CZ + CH.z0 - 0.002; vz = Math.min(vz, 0); } else { pz = CZ + CH.z1 + 0.002; vz = Math.max(vz, 0); }
+      } }
+    P[o] = px; P[o+1] = py; P[o+2] = pz;
+    if (settle){ tp.ST[i] = 2; V[o] = V[o+1] = V[o+2] = 0; tp.AX[i] = 0; tp.DIRTY[i] = 1; }
+    else { V[o] = vx; V[o+1] = vy; V[o+2] = vz; }
+  }
+
+  function composeParticle(tp, i, t){
+    const o = i * 3, s = tp.SC[i] * tp.SZ[i];
+    _p.set(tp.P[o], tp.P[o+1], tp.P[o+2]);
+    if (tp.flat){
+      if (tp.ST[i] === 2) _e.set(-Math.PI / 2 + tp.TILT[i], 0, tp.AZ[i]);
+      else { const ph = tp.PH[i]; _e.set(-Math.PI / 2 + 0.8 * Math.sin(t * 2.8 + ph * 70) + tp.AX[i], 0.6 * Math.sin(t * 2.1 + ph * 40), tp.AZ[i]); }
+      _q.setFromEuler(_e);
+    } else _q.set(0, 0, 0, 1);
+    _s.set(s, s, s);
+    _m.compose(_p, _q, _s);
+    tp.mesh.setMatrixAt(i, _m);
+  }
+
+  function updateParticles(dt, t){
+    for (const tp of TYPES){
+      const c = tp.count; let any = false;
+      for (let i = 0; i < N; i++){
+        if (tp.ST[i] === 0){ if (i < c) spawn(tp, i, false); else continue; }
+        let changing = false;
+        if (i >= c){ tp.SC[i] -= dt * 2.2; if (tp.SC[i] <= 0){ tp.SC[i] = 0; tp.ST[i] = 0; tp.mesh.setMatrixAt(i, ZERO); any = true; continue; } changing = true; }
+        else if (tp.SC[i] < 1){ tp.SC[i] = Math.min(1, tp.SC[i] + dt * 2.2); changing = true; }
+        if (tp.ST[i] === 1) stepParticle(tp, i, dt, t);
+        if (tp.ST[i] === 1 || changing || tp.DIRTY[i]){ composeParticle(tp, i, t); tp.DIRTY[i] = 0; any = true; }
+      }
+      if (any) tp.mesh.instanceMatrix.needsUpdate = true;
+    }
+  }
+  function initParticles(){
+    const counts = seasonCounts(visSeason());
+    TYPES.forEach((tp, k) => { tp.count = counts[k]; for (let i = 0; i < tp.count; i++) spawn(tp, i, true); });
+  }
+
+  /* --- post-processing: scene (HDR) -> bloom -> tone curve + vignette ---
+     If the add-on scripts did not load, the scene renders directly as before. */
+  let composer = null, bloom = null, finalPass = null, bokeh = null;
+  if (T.EffectComposer && T.RenderPass && T.ShaderPass && T.UnrealBloomPass){
+    try {
+      const gl2 = renderer.capabilities.isWebGL2;
+      const RT = (gl2 && !lite && T.WebGLMultisampleRenderTarget) ? T.WebGLMultisampleRenderTarget : T.WebGLRenderTarget;
+      const rt = new RT(2, 2, { minFilter: T.LinearFilter, magFilter: T.LinearFilter, format: T.RGBAFormat, type: gl2 ? T.HalfFloatType : T.UnsignedByteType });
+      if (rt.isWebGLMultisampleRenderTarget) rt.samples = 4;   // keep edges smooth (the canvas's own antialiasing is bypassed)
+      composer = new T.EffectComposer(renderer, rt);
+      composer.addPass(new T.RenderPass(scene, camera));
+      if (T.BokehPass){
+        bokeh = new T.BokehPass(scene, camera, { focus: 9, aperture: 0.0008, maxblur: 0.012, width: 2, height: 2 });
+        // the glass dome and light sprites must not count as "in front" in the depth pass, or everything inside would blur as the glass
+        const bokehRender = bokeh.render.bind(bokeh);
+        bokeh.render = function(r, w, rd, dt, mask){ const hide = [glassFront, glassBack, sky, ...glows.map(g => g.m)]; const vis = hide.map(o => o.visible); hide.forEach(o => o.visible = false); try { bokehRender(r, w, rd, dt, mask); } finally { hide.forEach((o, i) => o.visible = vis[i]); } };
+        // r128's BokehPass writes into the next buffer but does not ask for a swap, and never resizes its depth target; fix both
+        bokeh.needsSwap = true;
+        bokeh.setSize = (w, h) => { bokeh.renderTargetDepth.setSize(w, h); if (bokeh.uniforms.aspect) bokeh.uniforms.aspect.value = w / h; };
+        composer.addPass(bokeh);
+      }
+      bloom = new T.UnrealBloomPass(new T.Vector2(256, 256), 0.45, 0.4, 0.97);   // strength, radius, threshold: only bright lights glow
+      composer.addPass(bloom);
+      finalPass = new T.ShaderPass({
+        uniforms: { tDiffuse: { value: null }, uKnee: { value: 0.82 }, uVig: { value: 0.18 } },
+        vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+        fragmentShader: `
+          uniform sampler2D tDiffuse; uniform float uKnee, uVig; varying vec2 vUv;
+          // tone curve: values below the knee stay as they are; brighter ones roll off smoothly toward white instead of clipping
+          vec3 shoulder(vec3 c){ vec3 over = max(c - uKnee, 0.0); return min(c, vec3(uKnee)) + (1.0 - uKnee) * (1.0 - exp(-over / (1.0 - uKnee))); }
+          void main(){
+            vec3 c = shoulder(texture2D(tDiffuse, vUv).rgb);
+            vec2 d = vUv - 0.5; float v = smoothstep(0.82, 0.3, length(d) * 1.2);   // vignette: darken toward the corners
+            c *= mix(1.0 - uVig, 1.0, v);
+            c += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) / 255.0;   // fine dither against banding
+            gl_FragColor = vec4(c, 1.0);
+          }`
+      });
+      composer.addPass(finalPass);
+    } catch(err){ console.warn('post-processing disabled', err); composer = null; }
+  }
+  if (!composer){ $('#ppNote').textContent = '후처리 기능을 불러오지 못해 이 설정은 지금 적용되지 않아요. 인터넷 연결을 확인하고 새로고침해 보세요.'; }
+
+  /* --- camera & input --- */
+  const cam = { theta: ROT, phi: 10 * D2R, zoom: 1, baseDist: 9, target: new T.Vector3(0, 1.35, 0), home: new T.Vector3(0, 1.35, 0) };
+  const REF_FOV_RAD = 50 * D2R;
+  function fit(){
+    const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    if (composer){ composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(w, h); }
+    camera.aspect = w / h; camera.updateProjectionMatrix();
+    const vf = REF_FOV_RAD, hf = 2 * Math.atan(Math.tan(vf / 2) * camera.aspect);   // framing from a fixed 50° reference; the lens fov zooms within it
+    cam.baseDist = 3.95 / Math.sin(Math.min(vf, hf) / 2);
+  }
+  function applyCamera(){
+    const d = cam.baseDist * cam.zoom;
+    camera.position.set(cam.target.x + d * Math.cos(cam.phi) * Math.sin(cam.theta), cam.target.y + d * Math.sin(cam.phi), cam.target.z + d * Math.cos(cam.phi) * Math.cos(cam.theta));
+    camera.lookAt(cam.target);
+  }
+  const _r = new T.Vector3(), _u = new T.Vector3();
+  function pan(dx, dy){
+    const d = cam.baseDist * cam.zoom; const k = 2 * d * Math.tan(camera.fov * D2R / 2) / Math.max(1, stage.clientHeight);
+    camera.updateMatrixWorld();
+    _r.setFromMatrixColumn(camera.matrixWorld, 0); _u.setFromMatrixColumn(camera.matrixWorld, 1);
+    cam.target.addScaledVector(_r, -dx * k).addScaledVector(_u, dy * k);
+    const off = cam.target.clone().sub(cam.home); if (off.length() > 3.5) cam.target.copy(cam.home).add(off.setLength(3.5));
+  }
+  const pointers = new Map(); let gest = null;
+  const pdist = () => { const a = [...pointers.values()]; return Math.hypot(a[0].x - a[1].x, a[0].y - a[1].y); };
+  const pmid = () => { const a = [...pointers.values()]; return { x: (a[0].x + a[1].x) / 2, y: (a[0].y + a[1].y) / 2 }; };
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+  canvas.addEventListener('pointerdown', e => {
+    if (controlBusy) return;
+    try { canvas.setPointerCapture(e.pointerId); } catch(_){}
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1){
+      const isPan = e.pointerType === 'mouse' && (e.button === 2 || e.button === 1);
+      gest = { mode: isPan ? 'pan' : 'pending', sx: e.clientX, sy: e.clientY, lx: e.clientX, ly: e.clientY, t0: performance.now(), multi: false, btn: e.button };
+    } else if (pointers.size === 2 && gest){
+      gest.mode = 'two'; gest.multi = true; gest.d0 = pdist(); gest.z0 = cam.zoom; gest.m = pmid();
+    } else if (gest) gest.multi = true;
+  });
+  canvas.addEventListener('pointermove', e => {
+    const p = pointers.get(e.pointerId); if (!p || !gest) return;
+    p.x = e.clientX; p.y = e.clientY;
+    if (gest.mode === 'two'){
+      if (pointers.size < 2) return;
+      const d = pdist(); cam.zoom = clamp(gest.z0 * gest.d0 / Math.max(10, d), 0.4, 2.2);
+      const m = pmid(); pan(m.x - gest.m.x, m.y - gest.m.y); gest.m = m; return;
+    }
+    const dx = e.clientX - gest.lx, dy = e.clientY - gest.ly; gest.lx = e.clientX; gest.ly = e.clientY;
+    if (gest.mode === 'pending' && Math.hypot(e.clientX - gest.sx, e.clientY - gest.sy) > 6){ gest.mode = 'rotate'; canvas.classList.add('dragging'); }
+    if (gest.mode === 'rotate'){ cam.theta -= dx * 0.0085; cam.phi = clamp(cam.phi + dy * 0.0065, -0.3, 1.35); }
+    else if (gest.mode === 'pan') pan(dx, dy);
+  });
+  function pEnd(e){
+    if (!pointers.has(e.pointerId)) return;
+    pointers.delete(e.pointerId);
+    if (!gest) return;
+    if (pointers.size === 0){
+      if (e.type === 'pointerup' && gest.mode === 'pending' && !gest.multi && gest.btn === 0 && performance.now() - gest.t0 < 400 && !controlBusy) shake();
+      gest = null; canvas.classList.remove('dragging');
+    } else if (gest.mode === 'two') gest.mode = 'idle';
+  }
+  canvas.addEventListener('pointerup', pEnd);
+  canvas.addEventListener('pointercancel', pEnd);
+  canvas.addEventListener('wheel', e => { e.preventDefault(); if (controlBusy) return; cam.zoom = clamp(cam.zoom * Math.exp(clamp(e.deltaY, -120, 120) * 0.0012), 0.4, 2.2); }, { passive: false });
+
+  /* --- state → scene --- */
+  const sunDir = new T.Vector3(0, 1, 0);
+  let lightTarget = 0;
+  function onState(){
+    const counts = seasonCounts(visSeason());
+    TYPES.forEach((tp, k) => tp.count = counts[k]);
+    updateSeasonLooks(visSeason());
+    const s = sun;
+    sunDir.set(s.dir[0], s.dir[1], s.dir[2]).normalize();
+    const sh = Math.sin(s.h * D2R);
+    const sky = skyAt(s.h);
+    skyU.uTop.value.setRGB(...sky.top); skyU.uBot.value.setRGB(...sky.bot);
+    skyU.uSun.value.copy(sunDir);
+    const md = new T.Vector3(-sunDir.x, Math.max(-sunDir.y, 0.3), -sunDir.z).normalize();
+    skyU.uMoon.value.copy(md);
+    skyU.uSunVis.value = s.h < 0 ? 0 : smooth(-0.04, 0.02, sh); // sun disc and glare only while the sun is up
+    skyU.uNight.value = smooth(0.02, -0.16, sh);
+    const warm = smooth(0.0, 0.45, sh);
+    skyU.uGlow.value.setRGB(1.0, lerp(0.62, 0.9, warm), lerp(0.35, 0.72, warm));
+    glassU.uTop.value.copy(skyU.uTop.value); glassU.uBot.value.copy(skyU.uBot.value);
+    glassU.uDay.value = smooth(-0.1, 0.3, sh);
+    glassU.uSunUp.value = s.h < 0 ? 0 : 1;
+    // sun casts light and shadow only at or above the horizon
+    sunL.intensity = s.h < 0 ? 0 : 1.0 * smooth(-0.01, 0.32, sh);
+    sunL.color.setRGB(1.0, lerp(0.72, 0.96, warm), lerp(0.5, 0.88, warm));
+    sunL.position.set(sunDir.x * 14, 1 + sunDir.y * 14, sunDir.z * 14);
+    hemi.intensity = (0.2 + 0.45 * smooth(-0.25, 0.45, sh)) * state.ambient;
+    hemi.color.setRGB(lerp(sky.bot[0], sky.top[0], 0.5) * 0.7 + 0.3, lerp(sky.bot[1], sky.top[1], 0.5) * 0.7 + 0.3, lerp(sky.bot[2], sky.top[2], 0.5) * 0.7 + 0.3);
+    hemi.groundColor.setRGB(lerp(0.12, 0.32, warm), lerp(0.1, 0.25, warm), lerp(0.1, 0.18, warm));
+    moonL.intensity = 0; // at night only the street lamp and window lights give highlights and shadows
+    moonL.position.set(md.x * 14, 1 + md.y * 14, md.z * 14);
+    amb.intensity = (0.06 + 0.06 * smooth(-0.2, 0.3, sh)) * state.ambient;
+    lightTarget = s.h < 0 ? 1 : 0;
+    snowTarget = (visSeason() >= 225 && visSeason() <= 315) ? 1 : 0;
+  }
+  let snowTarget = 0;
+
+  /* --- loop --- */
+  let last = performance.now(), tAcc = 0, running = true;
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const _sv = new T.Vector3();
+  function frame(now){
+    if (!running) return;
+    requestAnimationFrame(frame);
+    const dt = Math.min(0.05, (now - last) / 1000); last = now; tAcc += dt;
+    try {
+      flowE *= Math.exp(-dt / 1.8); if (flowE < 0.001) flowE = 0;
+      // roof snow / rock snow over ~1.5 s
+      const ds = dt / 1.5; snowAmt = snowTarget > snowAmt ? Math.min(snowTarget, snowAmt + ds) : Math.max(snowTarget, snowAmt - ds);
+      for (const m of roofSnow){ m.visible = snowAmt > 0.004; m.position.copy(m.userData.base).addScaledVector(m.userData.n, SNOW_T * 0.6 * snowAmt); }
+      rockSnow.value = snowAmt;
+      // lamp + window light
+      lightsOn = lightTarget > lightsOn ? Math.min(1, lightsOn + dt * 5) : Math.max(0, lightsOn - dt * 5);
+      lampLight.intensity = 1.9 * lightsOn; winLight.intensity = 1.25 * lightsOn;
+      bulbMat.emissive.setRGB(1.0 * lightsOn, 0.82 * lightsOn, 0.5 * lightsOn);
+      lampGlass.material.emissive.setRGB(0.5 * lightsOn, 0.38 * lightsOn, 0.18 * lightsOn);
+      paneMat.emissive.setRGB(1.0 * lightsOn, 0.7 * lightsOn, 0.32 * lightsOn);
+      paneMat.color.setRGB(lerp(0.11, 1, lightsOn), lerp(0.15, 0.8, lightsOn), lerp(0.2, 0.5, lightsOn));
+      for (const g of glows){ g.m.material.opacity = lightsOn * (0.85 + 0.08 * Math.sin(tAcc * 3.1 + g.base * 9)); }
+      // shake wobble
+      if (wobT < 1.2){ wobT += dt; const k = reduceMotion ? 0.3 : 1; const a = Math.exp(-wobT * 5.5) * Math.sin(wobT * 30); rig.position.y = 0.13 * a * k; } // shake straight up and down only
+      else if (rig.position.y !== 0){ rig.position.set(0, 0, 0); rig.rotation.z = 0; }
+      updateParticles(dt, tAcc);
+      applyCamera();
+      updateLens();
+      sky.position.copy(camera.position);
+      skyU.uTime.value = tAcc;
+      camera.updateMatrixWorld();
+      _sv.copy(sunDir).transformDirection(camera.matrixWorldInverse);
+      glassU.uSunV.value.copy(_sv);
+      glassBack.material.uniforms.uSunV.value.copy(_sv); glassFront.material.uniforms.uSunV.value.copy(_sv);
+      // bloom is faint by day and stronger once the lamps are on
+      if (composer){
+        // post-processing settings from the panel; day/night pairs follow the lamps switching on and off
+        if (bloom){ bloom.strength = lerp(pp.bloomDay, pp.bloomNight, lightsOn); bloom.radius = pp.radius; bloom.threshold = lerp(pp.thrDay, pp.thrNight, lightsOn); }
+        finalPass.uniforms.uKnee.value = pp.knee; finalPass.uniforms.uVig.value = lerp(pp.vigDay, pp.vigNight, lightsOn);
+        composer.render(dt);
+      } else renderer.render(scene, camera);
+    } catch(err){
+      running = false; console.error(err);
+      showError('장면을 그리다 멈췄어요', '그래픽 처리 중 오류가 나서 화면을 더 그릴 수 없어요. (' + (err && err.message ? err.message : err) + ')',
+        ['새로고침으로 다시 시작해 보세요.', '계속 멈추면 "가볍게 다시 시작"을 눌러 그림자 해상도와 화면 배율을 낮춰 보세요.', '다른 탭이나 3D 앱을 닫아 그래픽 메모리를 비워 주세요.']);
+    }
+  }
+  // glass material clones share uniform objects except uK
+  for (const g of [glassBack, glassFront]){ const u = g.material.uniforms; u.uTop = glassU.uTop; u.uBot = glassU.uBot; u.uDay = glassU.uDay; u.uSunUp = glassU.uSunUp; u.uSunV = { value: new T.Vector3() }; }
+
+  canvas.addEventListener('webglcontextlost', e => {
+    e.preventDefault(); running = false;
+    showError('그래픽 메모리가 부족해 화면이 멈췄어요', '브라우저가 이 장면의 그래픽 자원(WebGL 컨텍스트)을 회수했어요. 보통 그래픽 메모리가 모자라거나 GPU 드라이버가 재시작될 때 생깁니다.',
+      ['다른 탭, 영상, 3D 앱을 닫고 새로고침하세요.', '"가볍게 다시 시작"을 누르면 그림자 해상도와 화면 배율을 낮춰 다시 엽니다.', '노트북이라면 전원을 연결하거나 브라우저 설정에서 하드웨어 가속이 켜져 있는지 확인하세요.']);
+  });
+
+  // shadows: both the outside and inside faces of every shadow-casting mesh go into the shadow maps
+  scene.traverse(o => {
+    if (!o.isMesh || !o.castShadow) return;
+    (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => { m.shadowSide = T.DoubleSide; });
+  });
+  new ResizeObserver(() => fit()).observe(stage);
+
+  /* --- lens settings: focal length (35 mm full-frame), aperture (depth of field), focus distance --- */
+  const SENSOR_H = 24, REF_FOV = 50;   // framing distance stays the one set for a 50° view, so a longer lens zooms in
+  const lens = { focal: 26, fstop: 16, focusM: 18.5, auto: true };
+  const lensOut = (k, v) => { $('#lensv_' + k).textContent = v; $('#lens_' + k).setAttribute('aria-valuetext', String(v)); };
+  function applyFocal(){ camera.fov = 2 * Math.atan(SENSOR_H / 2 / lens.focal) / D2R; camera.updateProjectionMatrix(); }
+  function setLens(k, v){
+    lens[k] = v; $('#lens_' + k).value = v;
+    lensOut(k, k === 'fstop' ? (+v).toFixed(1) : k === 'focusM' ? (+v).toFixed(1) : Math.round(v));
+    if (k === 'focal') applyFocal();
+  }
+  ['focal', 'fstop', 'focusM'].forEach(k => {
+    const el = $('#lens_' + k);
+    el.addEventListener('input', () => { if (k === 'focusM'){ lens.auto = false; $('#lens_auto').checked = false; } setLens(k, +el.value); });
+    el.addEventListener('pointerdown', () => { controlBusy++; const end = () => { controlBusy = Math.max(0, controlBusy - 1); window.removeEventListener('pointerup', end); window.removeEventListener('pointercancel', end); }; window.addEventListener('pointerup', end); window.addEventListener('pointercancel', end); });
+  });
+  $('#lens_auto').addEventListener('change', e => { lens.auto = e.target.checked; });
+  $('#lensReset').addEventListener('click', e => { e.preventDefault(); setLens('focal', 26); setLens('fstop', 16); lens.auto = true; $('#lens_auto').checked = true; });
+  if (!bokeh) $('#lensNote').textContent = '심도 효과를 불러오지 못해 조리개와 초점은 지금 적용되지 않아요. 초점 거리(화각)는 적용돼요.';
+  setLens('focal', 26);
+  function updateLens(){
+    if (lens.auto){ const m = camera.position.distanceTo(cam.target) * UNIT_M; lens.focusM = m; const r = Math.round(m * 2) / 2; $('#lens_focusM').value = r; lensOut('focusM', r.toFixed(1)); }
+    if (!bokeh) return;
+    // blur grows with the square of the focal length and falls with the f-number (scaled for this miniature scene)
+    bokeh.uniforms.focus.value = lens.focusM / UNIT_M;
+    bokeh.uniforms.aperture.value = 0.012 * Math.pow(lens.focal / 26, 2) / lens.fstop;
+  }
+  fit();
+  updateSeasonLooks(visSeason());
+  initParticles();
+  window.addEventListener('keydown', e => {
+    if (e.code !== 'Space' && e.key !== ' ') return;
+    const tg = e.target; if (tg && (tg.tagName === 'BUTTON' || tg.tagName === 'INPUT' && tg.type !== 'range' || tg.isContentEditable)) return;
+    e.preventDefault(); if (controlBusy || e.repeat) return; shake();
+  });
+  requestAnimationFrame(t => { last = t; frame(t); $('#loading').hidden = true; });
+  const fin = (v, d) => Number.isFinite(+v) ? +v : d;
+  function getSaved(){ return { lens: { focal: lens.focal, fstop: lens.fstop, focusM: lens.focusM, auto: lens.auto }, cam: { theta: cam.theta, phi: cam.phi, zoom: cam.zoom, tx: cam.target.x, ty: cam.target.y, tz: cam.target.z } }; }
+  function applySaved(o){
+    if (o && o.lens){
+      setLens('focal', clamp(fin(o.lens.focal, 26), 14, 200)); setLens('fstop', clamp(fin(o.lens.fstop, 16), 1.4, 22));
+      lens.auto = o.lens.auto !== false; $('#lens_auto').checked = lens.auto;
+      if (!lens.auto) setLens('focusM', clamp(fin(o.lens.focusM, 18.5), 2, 60));
+    }
+    if (o && o.cam){
+      cam.theta = fin(o.cam.theta, cam.theta); cam.phi = clamp(fin(o.cam.phi, cam.phi), -0.3, 1.35); cam.zoom = clamp(fin(o.cam.zoom, 1), 0.4, 2.2);
+      cam.target.set(fin(o.cam.tx, cam.home.x), fin(o.cam.ty, cam.home.y), fin(o.cam.tz, cam.home.z));
+      if (cam.target.distanceTo(cam.home) > 3.5) cam.target.copy(cam.home);
+    }
+  }
+  function resetDefaults(){
+    applySaved({ lens: { focal: 26, fstop: 16, auto: true }, cam: { theta: ROT, phi: 10 * D2R, zoom: 1, tx: cam.home.x, ty: cam.home.y, tz: cam.home.z } });
+  }
+  return { onState, shake, getSaved, applySaved, resetDefaults };
+}
+
+/* ---------------- saved settings (per browser) ---------------- */
+const SAVE_KEY = 'snowglobe-settings-v1';
+let saved = null, lastSaved = '';
+try { const raw = localStorage.getItem(SAVE_KEY); if (raw) saved = JSON.parse(raw); } catch(_){ saved = null; }
+const finS = (v, d) => Number.isFinite(+v) ? +v : d;
+if (saved){
+  state.knob = finS(saved.knob, 0); state.time = mod(finS(saved.time, 7), 24); state.lat = clamp(finS(saved.lat, SEOUL), -90, 90);
+  state.density = clamp(finS(saved.density, DENS_DEFAULT), DENS_MIN, DENS_MAX); state.maxCount = Math.round(state.density * INTERIOR_M3);
+}
+function collectSettings(){
+  const o = { v: 1, knob: state.knob, time: state.time, lat: state.lat, ambient: state.ambient, density: state.density, pp: Object.assign({}, pp) };
+  if (scene3d && scene3d.getSaved) Object.assign(o, scene3d.getSaved());
+  return o;
+}
+function saveNow(){
+  try { const txt = JSON.stringify(collectSettings()); if (txt !== lastSaved){ localStorage.setItem(SAVE_KEY, txt); lastSaved = txt; } }
+  catch(_){ $('#saveNote').textContent = '이 브라우저에서는 설정을 저장할 수 없어요.'; }
+}
+$('#saveReset').addEventListener('click', () => {
+  // back to the defaults in place (no page reload), then forget what was stored
+  try { localStorage.removeItem(SAVE_KEY); } catch(_){}
+  state.knob = 0; state.time = 7; state.lat = SEOUL;
+  Object.keys(PP_DEFAULTS).forEach(k => setPP(k, PP_DEFAULTS[k]));
+  if (scene3d && scene3d.resetDefaults) scene3d.resetDefaults();
+  setAmbient(100);
+  setDensity(DENS_DEFAULT);   // also runs update()
+  lastSaved = JSON.stringify(collectSettings());
+  $('#saveNote').textContent = '기본값으로 되돌렸어요. 다시 바꾸면 자동 저장돼요.';
+});
+
+/* ---------------- boot ---------------- */
+if (typeof THREE === 'undefined'){
+  showError('3D 라이브러리를 불러오지 못했어요', 'three.js를 cdnjs.cloudflare.com에서 받아오지 못해 3D 장면을 만들 수 없어요. 조작부는 그대로 쓸 수 있어요.',
+    ['인터넷 연결을 확인한 뒤 새로고침하세요.', '회사·학교 네트워크나 광고 차단 확장이 cdnjs.cloudflare.com을 막고 있지 않은지 확인하세요.', '파일을 내려받아 열었다면 인터넷이 연결된 상태에서 열어야 해요.']);
+} else if (!webglOK()){
+  showError('이 브라우저에서 WebGL을 쓸 수 없어요', '3D 장면은 WebGL로 그리는데, 지금 브라우저나 기기에서 WebGL이 꺼져 있거나 지원되지 않아요.',
+    ['브라우저 설정에서 "가능한 경우 하드웨어 가속 사용"을 켜고 브라우저를 다시 시작하세요.', '최신 Chrome, Edge, Firefox, Safari로 열어 보세요.', '그래픽 드라이버를 업데이트하세요.']);
+} else {
+  try { scene3d = build3D(); }
+  catch(err){
+    console.error(err);
+    showError('3D 장면을 시작하지 못했어요', 'WebGL 화면을 만드는 중 오류가 났어요. (' + (err && err.message ? err.message : err) + ')',
+      ['새로고침하세요.', '"가볍게 다시 시작"으로 그래픽 부담을 줄여 보세요.', '브라우저의 하드웨어 가속이 켜져 있는지 확인하세요.']);
+  }
+}
+if (saved){
+  if (saved.pp) Object.keys(PP_DEFAULTS).forEach(k => { if (Number.isFinite(+saved.pp[k])) setPP(k, +saved.pp[k]); });
+  if (scene3d && scene3d.applySaved) scene3d.applySaved(saved);
+  setAmbient(clamp(finS(saved.ambient, 1), 0, 3) * 100);
+}
+setDensity(state.density);   // also runs update()
+setInterval(saveNow, 1000);
+window.addEventListener('pagehide', saveNow);
+document.addEventListener('visibilitychange', () => { if (document.hidden) saveNow(); });
+})();
+</script>
+
+</body>
+</html>

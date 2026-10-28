@@ -2,5 +2,10 @@
   {
     "Title": "Hisuian Zorua",
     "Model": "hisuizorua/HISUIZORUA.fbx"
+  },
+  {
+    "Title": "오두막 스노우 글로브",
+    "Page": "snow-globe.html",
+    "Description": "three.js"
   }
 ]

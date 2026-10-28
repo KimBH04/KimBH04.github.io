@@ -195,7 +195,24 @@
     color: var(--muted);
 }
 
+/* 독립 HTML 작품 (iframe) */
+.ArtsPage .Embed {
+    display: block;
+    width: 100%;
+    height: 80vh;
+    min-height: 560px;
+    margin-top: 16px;
+    background: var(--ink);
+    border: var(--border);
+    box-shadow: var(--shadow);
+}
+
 @media (max-width: 640px) {
+    .ArtsPage .Embed {
+        height: 85vh;
+        min-height: 480px;
+    }
+
     .ArtsPage .Viewer {
         aspect-ratio: 1 / 1;
     }
